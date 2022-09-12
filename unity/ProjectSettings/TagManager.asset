@@ -18,7 +18,7 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Overlay
   - Water
   - UI
   - 
@@ -32,6 +32,10 @@ TagManager:
   - Procedural1
   - Procedural2
   - Procedural3
+  - User
+  - 
+  - 
+  - 
   - 
   - 
   - 
@@ -50,4 +54,7 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: XR Ray Interactor
+    uniqueID: 3440087851
     locked: 0

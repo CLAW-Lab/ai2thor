@@ -26,7 +26,7 @@ using UnityEngine.Networking;
 using System.Linq;
 using UnityEngine.Rendering.PostProcessing;
 using UnityStandardAssets.ImageEffects;
-
+using Unity.XR.CoreUtils;
 
 public class AgentManager : MonoBehaviour {
     public List<BaseFPSAgentController> agents = new List<BaseFPSAgentController>();
@@ -70,6 +70,8 @@ public class AgentManager : MonoBehaviour {
     public const float MAX_FOV = 180;
     public const float MIN_FOV = 0;
     public string agentMode;
+    [SerializeField] private GameObject _xrPrefab;
+    [SerializeField] private RenderTexture _agentCameraRenderTexture;
 
 
     public Bounds sceneBounds = UtilityFunctions.CreateEmptyBounds();
@@ -151,7 +153,7 @@ public class AgentManager : MonoBehaviour {
         }
 #endif
 
-        StartCoroutine(EmitFrame());
+        StartCoroutine(EmitFrameVR());
     }
 
     private void initializePrimaryAgent() {
@@ -173,37 +175,41 @@ public class AgentManager : MonoBehaviour {
             SetUpLocobotController(action);
         } else if (action.agentMode.ToLower() == "drone") {
             SetUpDroneController(action);
-        } else if (agentMode == "stretch" || agentMode == "arm") {
-            if (agentMode == "stretch") {
-                SetUpStretchController(action);
-            } else if (agentMode == "arm") {
-                SetUpArmController(true);
-            } else {
-                // Should not be possible but being very defensive.
-                throw new ArgumentException($"Invalid agentMode {action.agentMode}");
-            }
+	} else if (action.agentMode.ToLower() == "stretch" || action.agentMode.ToLower() == "arm" || action.agentMode.ToLower() == "vr") {
+	    if (action.agentMode.ToLower() == "stretch") {
+	        SetUpStretchController(action);
+	        action.autoSimulation = false;
+	    }
+	    else if (action.agentMode.ToLower() == "arm") {
+	        SetUpArmController(true);
+	        action.autoSimulation = false;
+	    }
+	    else if (action.agentMode.ToLower() == "vr") {
+	        SetUpVRController();
+	        action.autoSimulation = true;
+	    }
+	
+	    physicsSceneManager.MakeAllObjectsMoveable();
+	
+	    if (action.massThreshold.HasValue) {
+	        if (action.massThreshold.Value > 0.0) {
+	            SetUpMassThreshold(action.massThreshold.Value);
+	        } else {
+	            var error = "massThreshold must have nonzero value - invalid value: " + action.massThreshold.Value;
+	            Debug.Log(error);
+	            primaryAgent.actionFinished(success: false, errorMessage: error);
+	            return;
+	        }
+	    }
+	} else {
+	    var error = $"Invalid agentMode {action.agentMode}";
+	    Debug.Log(error);
+	    primaryAgent.actionFinished(success: false, errorMessage: error);
+	    return;
+	}
+    }
 
-            action.autoSimulation = false;
-            physicsSceneManager.MakeAllObjectsMoveable();
-        } else {
-            var error = $"Invalid agentMode {action.agentMode}";
-            Debug.Log(error);
-            primaryAgent.actionFinished(success: false, errorMessage: error);
-            return;
-        }
-
-        if (action.massThreshold.HasValue) {
-            if (action.massThreshold.Value > 0.0) {
-                SetUpMassThreshold(action.massThreshold.Value);
-            } else {
-                var error = $"massThreshold must have nonzero value - invalid value: {action.massThreshold.Value}";
-                Debug.Log(error);
-                primaryAgent.actionFinished(false, error);
-                return;
-            }
-        }
-
-        primaryAgent.ProcessControlCommand(action.dynamicServerAction);
+primaryAgent.ProcessControlCommand(action.dynamicServerAction);
         Time.fixedDeltaTime = action.fixedDeltaTime.GetValueOrDefault(Time.fixedDeltaTime);
         if (action.targetFrameRate > 0) {
             Application.targetFrameRate = action.targetFrameRate;
@@ -268,6 +274,19 @@ public class AgentManager : MonoBehaviour {
         this.agents.Clear();
         BaseAgentComponent baseAgentComponent = GameObject.FindObjectOfType<BaseAgentComponent>();
         primaryAgent = createAgentType(typeof(PhysicsRemoteFPSAgentController), baseAgentComponent);
+    }
+
+    public void SetUpVRController() {
+        this.agents.Clear();
+        BaseAgentComponent baseAgentComponent = GameObject.FindObjectOfType<BaseAgentComponent>();
+        primaryAgent = createAgentType(typeof(ArmAgentController), baseAgentComponent);
+        var handObj = primaryAgent.transform.FirstChildOrDefault((x) => x.name == "robot_arm_rig_gripper");
+        handObj.gameObject.SetActive(true);
+        //primaryAgent.m_Camera.enabled = false;
+        primaryAgent.m_Camera.targetDisplay = 5;
+        primaryAgent.m_Camera.targetTexture = _agentCameraRenderTexture;
+        primaryAgent.m_Camera.tag = "Untagged";
+        //GameObject.Instantiate(_xrPrefab);
     }
 
     private BaseFPSAgentController createAgentType(Type agentType, BaseAgentComponent agentComponent) {
@@ -944,8 +963,6 @@ public class AgentManager : MonoBehaviour {
         if (shouldRender) {
             RenderTexture.active = currentTexture;
         }
-
-
     }
 
     private string serializeMetadataJson(MultiAgentMetadata multiMeta) {
@@ -972,6 +989,18 @@ public class AgentManager : MonoBehaviour {
         return this.agentManagerState == AgentState.Emit && emit;
     }
 
+    private bool isActionComplete() {
+        bool complete = true;
+        foreach (BaseFPSAgentController agent in this.agents) {
+            if (agent.agentState != AgentState.ActionComplete) {
+                complete = false;
+                break;
+            }
+        }
+
+        return this.agentManagerState == AgentState.ActionComplete && complete;
+    }
+
     private RenderTexture createRenderTexture(int width, int height) {
         RenderTexture rt = new RenderTexture(width: width, height: height,depth:0, GraphicsFormat.R8G8B8A8_UNorm);
         rt.antiAliasing = 4;
@@ -983,7 +1012,42 @@ public class AgentManager : MonoBehaviour {
             Debug.LogError("Could not create a renderTexture");
             return null;
         }
+    }
 
+    public IEnumerator EmitFrameVR() {
+        while (true) {
+            bool shouldRender = this.renderImage && serverSideScreenshot;
+            yield return new WaitForEndOfFrame();
+
+            frameCounter += 1;
+
+            if (!this.isActionComplete()) {
+                continue;
+            }
+
+            foreach (BaseFPSAgentController agent in this.agents) {
+                if (agent.agentState == AgentState.ActionComplete) {
+                    agent.agentState = AgentState.Emit;
+                }
+            }
+
+            MultiAgentMetadata multiMeta = new MultiAgentMetadata();
+
+            ThirdPartyCameraMetadata[] cameraMetadata = new ThirdPartyCameraMetadata[this.thirdPartyCameras.Count];
+            List<KeyValuePair<string, byte[]>> renderPayload = new List<KeyValuePair<string, byte[]>>();
+            createPayload(multiMeta, cameraMetadata, renderPayload, shouldRender);
+            string metadata = serializeMetadataJson(multiMeta);
+            print("Created Metadata");
+            WriteData(metadata);
+        }
+    }
+
+    private void WriteData(string str) {
+        string filePath = Application.persistentDataPath + "/Metadata";
+        if (!Directory.Exists(filePath)) {
+            Directory.CreateDirectory(filePath);
+        }
+        File.WriteAllText(filePath + @$"/{primaryAgent.lastAction}_[{DateTime.Now.ToString("yyyy-MM-dd--HH--mm-ss")}].txt", str + '\n');
     }
 
     public IEnumerator EmitFrame() {
@@ -1150,10 +1214,6 @@ public class AgentManager : MonoBehaviour {
             //}
 
 #endif
-
-
-
-
         }
 
 
@@ -1610,6 +1670,7 @@ public struct MetadataWrapper {
     public AgentMetadata agent;
     public HandMetadata heldObjectPose;
     public ArmMetadata arm;
+    public ArmMetadata[] vrArm;
     public float fov;
     public Vector3 cameraPosition;
     public float cameraOrthSize;

@@ -179,7 +179,7 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             this.m_WalkSpeed = 2;
             this.m_RunSpeed = 10;
             this.m_GravityMultiplier = 2;
-            this.m_Camera = this.transform.Find("FirstPersonCharacter").GetComponent<Camera>();
+            this.m_Camera = this.transform.FirstChildOrDefault((x) => x.name == "FirstPersonCharacter").GetComponent<Camera>(); /*FindRecursive(this.transform, "FirstPersonCharacter").GetComponent<Camera>();*/
             this.m_CharacterController = GetComponent<CharacterController>();
             collidedObjects = new string[0];
             collisionsInAction = new List<string>();
@@ -274,7 +274,10 @@ namespace UnityStandardAssets.Characters.FirstPerson {
         public CollisionFlags m_CollisionFlags;
         protected Vector3 lastPosition;
 
-        protected string lastAction;
+        public string lastAction {
+            get;
+            protected set;
+        }
         public bool lastActionSuccess {
             get;
             protected set;
@@ -1828,6 +1831,11 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             // ARM
             if (Arm != null) {
                 metaMessage.arm = Arm.GenerateMetadata();
+                // Generate metadata for vr arm 
+                ArmMetadata[] vrArmMetadata = Arm.GenerateMetadataVR();
+                if (vrArmMetadata.Length != 0 && lastAction == "VRArmMode") {
+                    metaMessage.vrArm = vrArmMetadata;
+                }
             }
             else if (SArm != null) {
                 metaMessage.arm = SArm.GenerateMetadata();
@@ -2028,10 +2036,26 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             actionFinished(true);
         }
 
+        private Transform FindRecursive(Transform self, string name) {
+            foreach (Transform child in self) {
+                if (child.name.Equals(name)) {
+                    return child;
+                }
 
-        // Helper method that parses objectId parameter to return the sim object that it target.
-        // The action is halted if the objectId does not appear in the scene.
-        protected SimObjPhysics getInteractableSimObjectFromId(string objectId, bool forceAction = false) {
+                var finding = FindRecursive(child, name);
+
+                if (finding != null) {
+                    return finding;
+                }
+            }
+
+            return null;
+        }
+
+
+    // Helper method that parses objectId parameter to return the sim object that it target.
+    // The action is halted if the objectId does not appear in the scene.
+    protected SimObjPhysics getInteractableSimObjectFromId(string objectId, bool forceAction = false) {
             // an objectId was given, so find that target in the scene if it exists
             if (!physicsSceneManager.ObjectIdToSimObjPhysics.ContainsKey(objectId)) {
                 throw new ArgumentException($"objectId: {objectId} is not the objectId on any object in the scene!");
@@ -4415,6 +4439,63 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             }
 
             return true;
+        }
+
+        public virtual bool TeleportCheck(Vector3 position, Vector3 rotation, bool forceAction, float? horizon = null) {
+            if (forceAction) {
+                return true;
+            }
+
+            position.y = transform.position.y;
+            horizon = horizon == null ? m_Camera.transform.localEulerAngles.x : (float)horizon;
+
+            // Note: using Mathf.Approximately uses Mathf.Epsilon, which is significantly
+            // smaller than 1e-2f. I'm not confident that will work in many cases.
+            if ((Mathf.Abs(rotation.x) >= 1e-2f || Mathf.Abs(rotation.z) >= 1e-2f)) {
+                return false;
+            }
+
+            // recall that horizon = 60 is look down 60 degrees and horizon = -30 is look up 30 degrees
+            if ((horizon > maxDownwardLookAngle || horizon < -maxUpwardLookAngle)) {
+                return false;
+            }
+
+            if (!agentManager.SceneBounds.Contains(position)) {
+                return false;
+            }
+
+            //if (!isPositionOnGrid(position)) {
+            //    return false;
+            //}
+
+            if (CheckCapsuleCollidingInPosition(position, true)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        protected bool CheckCapsuleCollidingInPosition(
+            Vector3 position,
+            bool includeErrorMessage = false
+        ) {
+            int layerMask = LayerMask.GetMask("SimObjVisible");
+            var capsuleCollider = GetComponent<CapsuleCollider>();
+            var skinWidth = GetComponent<CharacterController>().skinWidth;
+            float radius = capsuleCollider.radius + skinWidth;
+            float innerHeight = capsuleCollider.height / 2.0f - radius;
+
+            Vector3 point1 = new Vector3(position.x, position.y + innerHeight, position.z);
+            Vector3 point2 = new Vector3(position.x, position.y + -innerHeight + skinWidth, position.z);
+
+            if (Physics.CheckCapsule(point1, point2, radius, layerMask, QueryTriggerInteraction.Ignore)) {
+                if (includeErrorMessage) {
+                    errorMessage = $"Collided.";
+                }
+                return true;
+            }
+
+            return false;
         }
 
         // cast a capsule the same size as the agent

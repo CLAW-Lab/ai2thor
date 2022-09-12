@@ -1,3 +1,5 @@
+Create a new VR branch for integrating nanna-grasp-force and Oculus grip pressure functionality
+
 <p align="center"><img width="50%" src="https://raw.githubusercontent.com/allenai/ai2thor/main/doc/static/logo.svg" /></p>
 <h3 align="center"><i>A Near Photo-Realistic Interactable Framework for Embodied AI Agents</i></h3>
 
@@ -76,6 +78,71 @@
 **🖼 Images.** First-class support for many image modalities and camera adjustments. Some modalities include ego-centric RGB images, instance segmentation, semantic segmentation, depth frames, normals frames, top-down frames, orthographic projections, and third-person camera frames. User's can also easily change camera properties, such as the size of the images and field of view.
 
 **🗺 Metadata.** After each step in the environment, there is a large amount of sensory data available about the state of the environment. This information can be used to build highly complex custom reward functions.
+
+## 🥽 VR-THOR
+
+This version of THOR aims to create a new VR interface where a human user is implanted into the scene and has the ability to control the agent. 
+
+**💻 Installation**
+
+(Quest 2 needs to be in [developer mode](https://developer.oculus.com/documentation/native/android/mobile-device-setup/) and [ADB](https://www.youtube.com/watch?v=daVygBAm1zs&t=42s) has to be installed)
+
+1. Download [apk](https://drive.google.com/drive/folders/1ZLg9hQVHHCJZa_Ok4Eo008YyhJK2fAYg?usp=sharing) or make android build from Unity Editor.
+
+2. Connect Quest 2 to computer using USB C cable.
+
+3. Accept the data transfer prompt within the Quest 2.
+
+4. Open ADB in the terminal.
+
+5. Run the installation command:\
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;```adb install /path/to/apk file```
+
+6. In the Oculus go to apps.
+
+7. Click the dropdown in the top right corner.
+
+8. Click Unknown Sources.
+
+9. There should be a app called AI2-THOR.
+
+<table>
+    <td align="center">
+        <video src="https://user-images.githubusercontent.com/34433210/187088248-129bf846-ecd5-4035-9a35-7f60829a3e79.mp4"/>
+    </td>
+</table>
+
+
+**🎮 How to Play**
+
+1. Find the Start button located on your left controller.
+
+2. Point your right controller on the button and a pointer should appear. 
+
+3. Click the back trigger on your controller to press the button.
+
+4. The scene should be initialized and you should see the agent and a larger menu.
+
+5. Now feel free to explore the scene and interact with the agent. There are guides on the controller that can help.
+
+**Modes:**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Locomotion</B>
+- User: Control the navigation of the user. Teleport the user and rotate the user using the right joystick.
+- Agent: Control the navigation of the agent. Teleport the agent, move the agent using the left joystick, and rotate the agent using the right joystick.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Arm</B>
+- On: Have the agents arm follow the movements of the user's controller.
+- Off: Arm does not follow the user's movements.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>POV</B>
+- First: View from the perspective of the agent.
+- Third: View from the perspective of the user.
+
+**How to Access Metadata**
+
+The metadata is generated whenever a action is completed. (If on Mac you will need [Android Transfer File](https://www.android.com/filetransfer/)) The metadata is located in:\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;```Quest 2\Internal shared storage\Android\data\com.AllenInstituteforArtificialIntelligence.AI2THOR\files\Metadata```
 
 ## 📰 Latest Announcements
 

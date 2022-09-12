@@ -19,6 +19,10 @@ public class FirstPersonCharacterCull : MonoBehaviour {
     public MeshRenderer[] RenderersToHide; // Mesh renderer that you want this script's camera to cull
     public BaseAgentComponent FPSController;
 
+    private void Start() {
+        
+    }
+
     public void SwitchRenderersToHide(GameObject visibilityCapsule) {
         List<MeshRenderer> renderers = new List<MeshRenderer>();
         foreach (var r in visibilityCapsule.GetComponentsInChildren<MeshRenderer>()) {

@@ -26,7 +26,7 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             ikSolver.ManipulateArm();
         }
 
-        protected IK_Robot_Arm_Controller getArm() {
+        public IK_Robot_Arm_Controller getArm() {
             IK_Robot_Arm_Controller arm = GetComponentInChildren<IK_Robot_Arm_Controller>();
             if (arm == null) {
                 throw new InvalidOperationException(
@@ -582,6 +582,101 @@ namespace UnityStandardAssets.Characters.FirstPerson {
                 returnToStart: returnToStart,
                 disableRendering: disableRendering
             );
+        }
+
+        public void ContinuousArmMoveFinish() {
+            this.lastAction = "VRArmMode";
+            this.actionFinished(true);
+        }
+
+        public override bool TeleportCheck(Vector3 position, Vector3 rotation, bool forceAction, float? horizon = null) {
+            if (!base.TeleportCheck(position, rotation, forceAction, horizon)) {
+                return false;
+            }
+
+            var arm = this.getArm();
+
+            foreach (CapsuleCollider c in arm.ArmCapsuleColliders) {
+                Vector3 center = c.transform.TransformPoint(c.center);
+                Vector3 offset = center - this.transform.position;
+                float radius = c.radius;
+
+                // direction of CapsuleCollider's orientation in local space
+                Vector3 dir = new Vector3();
+
+                switch (c.direction) {
+                    // x just in case
+                    case 0:
+                        // get world space direction of this capsule's local right vector
+                        dir = c.transform.right;
+                        break;
+                    // y just in case
+                    case 1:
+                        // get world space direction of this capsule's local up vector
+                        dir = c.transform.up;
+                        break;
+                    // z because all arm colliders have direction z by default
+                    case 2:
+                        // get world space direction of this capsule's local forward vector
+                        dir = c.transform.forward;
+
+                        // this doesn't work because transform.right is in world space already,
+                        // how to get transform.localRight?
+                        break;
+                }
+
+                // debug draw forward of each joint
+                // #if UNITY_EDITOR
+                // // debug draw
+                // Debug.DrawLine(center, center + dir * 2.0f, Color.red, 10.0f);
+                // #endif
+
+                // new center in world space + direction with magnitude (1/2 height - radius)
+                Vector3 point0 = position + offset + dir * (c.height / 2 - radius);
+
+                // point 1
+                // new center in world space - direction with magnitude (1/2 height - radius)
+                Vector3 point1 = position + offset - dir * (c.height / 2 - radius);
+
+                // debug draw ends of each capsule of each joint
+                // #if UNITY_EDITOR
+                // GizmoDrawCapsule gdc = new GizmoDrawCapsule();
+                // gdc.p0 = point0;
+                // gdc.p1 = point1;
+                // gdc.radius = radius;
+                // debugCapsules.Add(gdc);
+                // #endif
+
+                // ok now finally let's make some overlap capsules
+                Collider[] cols = Physics.OverlapCapsule(
+                    point0: point0,
+                    point1: point1,
+                    radius: radius,
+                    layerMask: LayerMask.GetMask("SimObjVisible"),
+                    queryTriggerInteraction: QueryTriggerInteraction.Ignore
+                );
+                if (cols.Length > 0) {
+                    return false;
+                }
+            }
+
+            // also check if the couple of box colliders are colliding
+            foreach (BoxCollider b in arm.ArmBoxColliders) {
+                Vector3 center = b.transform.TransformPoint(b.center);
+                Vector3 offset = center - this.transform.position;
+                Collider[] cols = Physics.OverlapBox(
+                    center: position + offset,
+                    halfExtents: b.size / 2.0f,
+                    orientation: b.transform.rotation,
+                    layerMask: LayerMask.GetMask("SimObjVisible"),
+                    queryTriggerInteraction: QueryTriggerInteraction.Ignore
+                );
+                if (cols.Length > 0) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
 #if UNITY_EDITOR
