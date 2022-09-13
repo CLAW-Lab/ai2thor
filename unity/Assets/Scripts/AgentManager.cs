@@ -175,41 +175,40 @@ public class AgentManager : MonoBehaviour {
             SetUpLocobotController(action);
         } else if (action.agentMode.ToLower() == "drone") {
             SetUpDroneController(action);
-	} else if (action.agentMode.ToLower() == "stretch" || action.agentMode.ToLower() == "arm" || action.agentMode.ToLower() == "vr") {
-	    if (action.agentMode.ToLower() == "stretch") {
-	        SetUpStretchController(action);
-	        action.autoSimulation = false;
-	    }
-	    else if (action.agentMode.ToLower() == "arm") {
-	        SetUpArmController(true);
-	        action.autoSimulation = false;
-	    }
-	    else if (action.agentMode.ToLower() == "vr") {
-	        SetUpVRController();
-	        action.autoSimulation = true;
-	    }
-	
-	    physicsSceneManager.MakeAllObjectsMoveable();
-	
-	    if (action.massThreshold.HasValue) {
-	        if (action.massThreshold.Value > 0.0) {
-	            SetUpMassThreshold(action.massThreshold.Value);
-	        } else {
-	            var error = "massThreshold must have nonzero value - invalid value: " + action.massThreshold.Value;
-	            Debug.Log(error);
-	            primaryAgent.actionFinished(success: false, errorMessage: error);
-	            return;
+	    } else if (action.agentMode.ToLower() == "stretch" || action.agentMode.ToLower() == "arm" || action.agentMode.ToLower() == "vr") {
+	        if (action.agentMode.ToLower() == "stretch") {
+                SetUpStretchController(action);
+                action.autoSimulation = false;
+            }
+            else if (action.agentMode.ToLower() == "arm") {
+                SetUpArmController(true);
+                action.autoSimulation = false;
+            }
+            else if (action.agentMode.ToLower() == "vr") {
+                SetUpVRController();
+                action.autoSimulation = true;
+            }
+        
+            physicsSceneManager.MakeAllObjectsMoveable();
+        
+            if (action.massThreshold.HasValue) {
+                if (action.massThreshold.Value > 0.0) {
+                    SetUpMassThreshold(action.massThreshold.Value);
+                } else {
+                    var error = "massThreshold must have nonzero value - invalid value: " + action.massThreshold.Value;
+                    Debug.Log(error);
+                    primaryAgent.actionFinished(success: false, errorMessage: error);
+                    return;
+                }
 	        }
+	    } else {
+	        var error = $"Invalid agentMode {action.agentMode}";
+	        Debug.Log(error);
+	        primaryAgent.actionFinished(success: false, errorMessage: error);
+	        return;
 	    }
-	} else {
-	    var error = $"Invalid agentMode {action.agentMode}";
-	    Debug.Log(error);
-	    primaryAgent.actionFinished(success: false, errorMessage: error);
-	    return;
-	}
-    }
 
-primaryAgent.ProcessControlCommand(action.dynamicServerAction);
+        primaryAgent.ProcessControlCommand(action.dynamicServerAction);
         Time.fixedDeltaTime = action.fixedDeltaTime.GetValueOrDefault(Time.fixedDeltaTime);
         if (action.targetFrameRate > 0) {
             Application.targetFrameRate = action.targetFrameRate;
