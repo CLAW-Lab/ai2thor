@@ -201,9 +201,13 @@ public class ArmManager : MonoBehaviour
         var arm = armAgent.getArm();
 
         if (arm.heldObjects.Count == 0) {
-            List<string> grabbableObjects = arm.WhatObjectsAreInsideMagnetSphereAsObjectID();
+            List<SimObjPhysics> grabbableObjects = arm.WhatObjectsAreInsideMagnetSphereAsSOP(true);
+            List<string> grabbableObjectIds = new List<string>();
             string errorMessage = "";
-            if (!arm.PickupObject(grabbableObjects, ref errorMessage)) {
+            foreach (SimObjPhysics sop in grabbableObjects) {
+                grabbableObjectIds.Add(sop.objectID);
+            }
+            if (!arm.PickupObject(grabbableObjectIds, ref errorMessage)) {
                 print(errorMessage);
             }
         }
