@@ -12,7 +12,7 @@ using UnityEditor.SceneManagement;
 #endif
 
 public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
-    [Header("Unique String ID of this Object")]
+    [Header("Unique String ID of this Object In Scene")]
     [SerializeField]
     public string objectID = string.Empty;
 
@@ -121,6 +121,14 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
     private ObjectOrientedBoundingBox cachedObjectOrientedBoundingBox;
     private AxisAlignedBoundingBox cachedAxisAlignedBoundingBox;
 
+    private bool forceCreateObjectOrientedBoundingBox = false;
+    
+    private bool shouldCreateObjectOrientedBoundingBox {
+        get {
+            return this.forceCreateObjectOrientedBoundingBox || this.IsPickupable || this.IsMoveable;
+        }
+    }
+
     public float GetTimerResetValue() {
         return TimerResetValue;
     }
@@ -164,8 +172,17 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
         ContainedObjectReferences.Remove(t);
     }
 
+    public void syncBoundingBoxes(
+        bool forceCacheReset = false,
+        bool forceCreateObjectOrientedBoundingBox = false
+    ) {
 
-    public void syncBoundingBoxes(bool forceCacheReset = false) {
+        if (forceCreateObjectOrientedBoundingBox) {
+            bool shouldCreateBefore = this.shouldCreateObjectOrientedBoundingBox;
+            this.forceCreateObjectOrientedBoundingBox = forceCreateObjectOrientedBoundingBox;
+
+            forceCacheReset = forceCacheReset || shouldCreateBefore != this.shouldCreateObjectOrientedBoundingBox;
+        }
 
         Vector3 position = this.gameObject.transform.position;
         Quaternion rotation = this.gameObject.transform.rotation;
@@ -215,7 +232,18 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
         foreach (SimObjPhysics simObject in this.transform.GetComponentsInChildren<SimObjPhysics>()) {
             if (simObject != this) {
                 childSimObjects.Add(simObject.transform);
+
+                // TODO: fix, This line makes accessing the axisAligned bounding box of some composed object during edior fail
+                // Which is needed for procedural serialization
+
+                // HACK the bounding box function needs to be reworked to not use parenting/unparenting
+                // And more information needs to be stored for the TWO cases of parenting
+                // Firs: structural parenting, where objects are permanently part of each other drawer child of dresser
+                // Second: another functional parenting, where objects are temporarily parented but shouldn't be treated as part of the same prefab
+                // e.g. apple on a plate
+#if !UNITY_EDITOR
                 simObject.transform.parent = null;
+#endif
             }
         }
 
@@ -284,12 +312,26 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
     }
 
     private ObjectOrientedBoundingBox objectOrientedBoundingBox() {
-        if (this.IsPickupable || this.IsMoveable) {
+        if (this.shouldCreateObjectOrientedBoundingBox) {
             ObjectOrientedBoundingBox b = new ObjectOrientedBoundingBox();
 
-            if (this.BoundingBox == null) {
-                Debug.LogError(this.transform.name + " is missing BoundingBox reference!");
-                return b;
+            bool shouldSetupBBox = false;
+            try {
+                shouldSetupBBox = this.BoundingBox == null;
+            } catch (UnassignedReferenceException e) {
+                shouldSetupBBox = true;
+            }
+
+            if (shouldSetupBBox) {
+                GameObject bb = new GameObject("BoundingBox");
+                bb.transform.position = gameObject.transform.position;
+                bb.transform.SetParent(gameObject.transform);
+                bb.AddComponent<BoxCollider>();
+                bb.GetComponent<BoxCollider>().enabled = false;
+                bb.tag = "Untagged";
+                bb.layer = 0;
+                this.BoundingBox = bb;
+                ContextSetUpBoundingBox();
             }
 
             // unparent child simobjects during bounding box generation
@@ -388,7 +430,7 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
     public void DropContainedObjectsStationary() {
         this.DropContainedObjects(reparentContainedObjects: false, forceKinematic: true);
     }
-    
+
     public void DropContainedObjects(
         bool reparentContainedObjects,
         bool forceKinematic
@@ -453,6 +495,9 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
     public SimObjType ObjType {
         get {
             return Type;
+        }
+        set {
+            Type = value;
         }
     }
 
@@ -672,7 +717,7 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
         // this is to enable kinematics if this object hits another object that isKinematic but needs to activate
         // physics uppon being touched/collided
 
-        if (droneFPSAgent == null){
+        if (droneFPSAgent == null) {
             return;
         }
 
@@ -920,24 +965,25 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
             new PhysicsMaterialValues(MyColliders[i].material.dynamicFriction, MyColliders[i].material.staticFriction, MyColliders[i].material.bounciness);
         }
 
-        myRigidbody = gameObject.GetComponent<Rigidbody>();
+        myRigidbody = gameObject.GetComponent<Rigidbody>(); myRigidbody = gameObject.GetComponent<Rigidbody>();
+        if (myRigidbody != null) {
+            Rigidbody rb = myRigidbody;
 
-        Rigidbody rb = myRigidbody;
+            RBoriginalAngularDrag = rb.angularDrag;
+            RBoriginalDrag = rb.drag;
 
-        RBoriginalAngularDrag = rb.angularDrag;
-        RBoriginalDrag = rb.drag;
+            //default all rigidbodies so that if their drag/angular drag is zero, it's at least nonzero
+            if (myRigidbody.drag == 0) {
+                myRigidbody.drag = 0.01f;
+            }
+            if (myRigidbody.angularDrag == 0) {
+                myRigidbody.angularDrag = 0.01f;
+            }
+        }
 
         TimerResetValue = HowManySecondsUntilRoomTemp;
 
         sceneManager = GameObject.Find("PhysicsSceneManager").GetComponent<PhysicsSceneManager>();
-
-        // default all rigidbodies so that if their drag/angular drag is zero, it's at least nonzero
-        if (myRigidbody.drag == 0) {
-            myRigidbody.drag = 0.01f;
-        }
-        if (myRigidbody.angularDrag == 0) {
-            myRigidbody.angularDrag = 0.01f;
-        }
 
         initializeProperties();
     }
@@ -971,7 +1017,7 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
 
     void LateUpdate() {
         // only update lastVelocity if physicsAutosimulation = true, otherwise let the Advance Physics function take care of it;
-        if (sceneManager.physicsSimulationPaused == false)
+        if (sceneManager.physicsSimulationPaused == false && myRigidbody != null)
         // record this object's current velocity
         {
             lastVelocity = Math.Abs(myRigidbody.angularVelocity.sqrMagnitude + myRigidbody.velocity.sqrMagnitude);
@@ -1024,6 +1070,14 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
         }
 
         return objs;
+    }
+
+    public float MassIncludingSimObjectsInReceptacle() {
+        float mass = myRigidbody.mass;
+        foreach (SimObjPhysics sop in GetAllSimObjectsInReceptacleTriggers()) {
+            mass += sop.GetComponent<Rigidbody>().mass;
+        }
+        return mass;
     }
 
     // return all sim objects by object ID contained by this object if it is a receptacle
@@ -2073,7 +2127,7 @@ public class SimObjPhysics : MonoBehaviour, SimpleSimObj {
         transform.eulerAngles = Vector3.zero;
 
         if (BoundingBox == null) {
-            GameObject BoundingBox = new GameObject();
+            GameObject BoundingBox = new GameObject("BoundingBox");
             BoundingBox.transform.parent = gameObject.transform;
             BoundingBox.transform.localPosition = Vector3.zero;
             BoundingBox.transform.localEulerAngles = Vector3.zero;

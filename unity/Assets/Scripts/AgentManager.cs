@@ -52,7 +52,7 @@ public class AgentManager : MonoBehaviour {
     public List<Camera> thirdPartyCameras = new List<Camera>();
     private Color[] agentColors = new Color[] { Color.blue, Color.yellow, Color.green, Color.red, Color.magenta, Color.grey };
     public int actionDuration = 3;
-    private BaseFPSAgentController primaryAgent;
+    public BaseFPSAgentController primaryAgent;
     private PhysicsSceneManager physicsSceneManager;
     private FifoServer.Client fifoClient = null;
     private enum serverTypes { WSGI, FIFO };
@@ -69,6 +69,7 @@ public class AgentManager : MonoBehaviour {
     public const float DEFAULT_FOV = 90;
     public const float MAX_FOV = 180;
     public const float MIN_FOV = 0;
+    public string agentMode;
     [SerializeField] private GameObject _xrPrefab;
     [SerializeField] private RenderTexture _agentCameraRenderTexture;
 
@@ -162,105 +163,52 @@ public class AgentManager : MonoBehaviour {
     }
 
     public void Initialize(ServerAction action) {
+        this.agentMode = action.agentMode.ToLower();
         // first parse agentMode and agentControllerType
         //"default" agentMode can use either default or "stochastic" agentControllerType
         //"locobot" agentMode can use either default or "stochastic" agentControllerType
         //"drone" agentMode can ONLY use "drone" agentControllerType, and NOTHING ELSE (for now?)
         if (action.agentMode.ToLower() == "default") {
-            if (action.agentControllerType.ToLower() != "physics" && action.agentControllerType.ToLower() != "stochastic") {
-                Debug.Log("default mode must use either physics or stochastic controller. Defaulting to physics");
-                action.agentControllerType = "";
-                SetUpPhysicsController();
-            }
-
-            // if not stochastic, default to physics controller
-            if (action.agentControllerType.ToLower() == "physics") {
-                // set up physics controller
-                SetUpPhysicsController();
-            }
-
-            // if stochastic, set up stochastic controller
-            else if (action.agentControllerType.ToLower() == "stochastic") {
-                // set up stochastic controller
-                primaryAgent.actionFinished(success: false, errorMessage: "Invalid combination of agentControllerType=stochastic and agentMode=default. In order to use agentControllerType=stochastic, agentMode must be set to stochastic");
-		return;
-            }
+            SetUpPhysicsController();
         } else if (action.agentMode.ToLower() == "locobot") {
-            // if not stochastic, default to stochastic
-            if (action.agentControllerType.ToLower() != "stochastic") {
-                Debug.Log("'bot' mode only fully supports the 'stochastic' controller type at the moment. Forcing agentControllerType to 'stochastic'");
-                action.agentControllerType = "stochastic";
-            } 
             // LocobotController is a subclass of Stochastic which just the agentMode (VisibilityCapsule) changed
             SetUpLocobotController(action);
-            
         } else if (action.agentMode.ToLower() == "drone") {
-            if (action.agentControllerType.ToLower() != "drone") {
-                Debug.Log("'drone' agentMode is only compatible with 'drone' agentControllerType, forcing agentControllerType to 'drone'");
-                action.agentControllerType = "drone";
-            }
             SetUpDroneController(action);
-        } else if (action.agentMode.ToLower() == "stretch") {
+	    } else if (action.agentMode.ToLower() == "stretch" || action.agentMode.ToLower() == "arm" || action.agentMode.ToLower() == "vr") {
+	        if (action.agentMode.ToLower() == "stretch") {
                 SetUpStretchController(action);
-
                 action.autoSimulation = false;
-                physicsSceneManager.MakeAllObjectsMoveable();
-
-                if (action.massThreshold.HasValue) {
-                    if (action.massThreshold.Value > 0.0) {
-                        SetUpMassThreshold(action.massThreshold.Value);
-                    } else {
-                        var error = "massThreshold must have nonzero value - invalid value: " + action.massThreshold.Value;
-                        Debug.Log(error);
-                        primaryAgent.actionFinished(false, error);
-                        return;
-                    }
-                }
-        } else if (action.agentMode.ToLower() == "arm" || action.agentMode.ToLower() == "vr") {
-
-            if (action.agentControllerType == "") {
-                action.agentControllerType = "mid-level";
-                Debug.Log("Defaulting to mid-level.");
             }
-
-            if (action.agentControllerType.ToLower() != "low-level" && action.agentControllerType.ToLower() != "mid-level") {
-                var error = "'arm' mode must use either low-level or mid-level controller.";
-                Debug.Log(error);
-                primaryAgent.actionFinished(success: false, errorMessage: error);
-                return;
-            } else if (action.agentControllerType.ToLower() == "mid-level") {
-                // set up physics controller
-                if (action.agentMode.ToLower() == "vr") {
-                    SetUpVRController();
-                    action.autoSimulation = true;
+            else if (action.agentMode.ToLower() == "arm") {
+                SetUpArmController(true);
+                action.autoSimulation = false;
+            }
+            else if (action.agentMode.ToLower() == "vr") {
+                SetUpVRController();
+                action.autoSimulation = true;
+            }
+        
+            physicsSceneManager.MakeAllObjectsMoveable();
+        
+            if (action.massThreshold.HasValue) {
+                if (action.massThreshold.Value > 0.0) {
+                    SetUpMassThreshold(action.massThreshold.Value);
                 } else {
-                    SetUpArmController(true);
-                    action.autoSimulation = false;
+                    var error = "massThreshold must have nonzero value - invalid value: " + action.massThreshold.Value;
+                    Debug.Log(error);
+                    primaryAgent.actionFinished(success: false, errorMessage: error);
+                    return;
                 }
-                // the arm should currently be used only with autoSimulation off
-                // as we manually control Physics during its movement
-                
-                physicsSceneManager.MakeAllObjectsMoveable();
+	        }
+	    } else {
+	        var error = $"Invalid agentMode {action.agentMode}";
+	        Debug.Log(error);
+	        primaryAgent.actionFinished(success: false, errorMessage: error);
+	        return;
+	    }
 
-                if (action.massThreshold.HasValue) {
-                    if (action.massThreshold.Value > 0.0) {
-                        SetUpMassThreshold(action.massThreshold.Value);
-                    } else {
-                        var error = "massThreshold must have nonzero value - invalid value: " + action.massThreshold.Value;
-                        Debug.Log(error);
-                        primaryAgent.actionFinished(success: false, errorMessage: error);
-                        return;
-                    }
-                }
-            } else {
-                var error = "unsupported";
-                Debug.Log(error);
-                primaryAgent.actionFinished(success: false, errorMessage: error);
-                return;
-            }
-        }
-
-primaryAgent.ProcessControlCommand(action.dynamicServerAction);
+        primaryAgent.ProcessControlCommand(action.dynamicServerAction);
         Time.fixedDeltaTime = action.fixedDeltaTime.GetValueOrDefault(Time.fixedDeltaTime);
         if (action.targetFrameRate > 0) {
             Application.targetFrameRate = action.targetFrameRate;
@@ -283,11 +231,18 @@ primaryAgent.ProcessControlCommand(action.dynamicServerAction);
         if (action.alwaysReturnVisibleRange) {
             ((PhysicsRemoteFPSAgentController)primaryAgent).alwaysReturnVisibleRange = action.alwaysReturnVisibleRange;
         }
-        print("start addAgents");
-        StartCoroutine(addAgents(action));
 
+        //if multi agent requested, add duplicates of primary agent now
+        addAgents(action);
+        this.agents[0].m_Camera.depth = 9999;
+        if (action.startAgentsRotatedBy != 0f) {
+            RotateAgentsByRotatingUniverse(action.startAgentsRotatedBy);
+        } else {
+            ResetSceneBounds();
+        }
+        this.agentManagerState = AgentState.ActionComplete;
     }
-    
+
     private void SetUpLocobotController(ServerAction action) {
         this.agents.Clear();
         // force snapToGrid to be false since we are stochastic
@@ -334,7 +289,7 @@ primaryAgent.ProcessControlCommand(action.dynamicServerAction);
     }
 
     private BaseFPSAgentController createAgentType(Type agentType, BaseAgentComponent agentComponent) {
-        BaseFPSAgentController agent = Activator.CreateInstance(agentType, new object[]{agentComponent, this}) as BaseFPSAgentController;
+        BaseFPSAgentController agent = Activator.CreateInstance(agentType, new object[] { agentComponent, this }) as BaseFPSAgentController;
         this.agents.Add(agent);
         return agent;
     }
@@ -361,28 +316,30 @@ primaryAgent.ProcessControlCommand(action.dynamicServerAction);
         get => this.primaryAgent;
     }
 
-    private IEnumerator addAgents(ServerAction action) {
-        yield return null;
-        Vector3[] reachablePositions = primaryAgent.getReachablePositions(2.0f);
-        for (int i = 1; i < action.agentCount && this.agents.Count < Math.Min(agentColors.Length, action.agentCount); i++) {
-            action.x = reachablePositions[i + 4].x;
-            action.y = reachablePositions[i + 4].y;
-            action.z = reachablePositions[i + 4].z;
-            addAgent(action);
-            yield return null; // must do this so we wait a frame so that when we CapsuleCast we see the most recently added agent
-        }
-        for (int i = 0; i < this.agents.Count; i++) {
-            this.agents[i].m_Camera.depth = 1;
-        }
-        this.agents[0].m_Camera.depth = 9999;
+    private void addAgents(ServerAction action) {
+        if (action.agentCount > 1) {
+            // note: for procedural scenes, adding multiple agents in will need to be done differently as currently
+            // initializing additional agents assumes the scene is already setup, and Houses initialize the
+            // primary agent floating in space, then generates the house, then teleports the primary agent.
+            // this will need a rework to make multi agent work as GetReachablePositions is used to position additional
+            // agents, which won't work if we initialize the agent(s) before the scene exists
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("Procedural")) {
+                throw new NotImplementedException($"Procedural scenes only support a single agent currently.");
+            }
 
-        if (action.startAgentsRotatedBy != 0f) {
-            RotateAgentsByRotatingUniverse(action.startAgentsRotatedBy);
-        } else {
-            ResetSceneBounds();
+            Physics.SyncTransforms();
+            Vector3[] reachablePositions = primaryAgent.getReachablePositions(2.0f);
+            for (int i = 1; i < action.agentCount && this.agents.Count < Math.Min(agentColors.Length, action.agentCount); i++) {
+                action.x = reachablePositions[i + 4].x;
+                action.y = reachablePositions[i + 4].y;
+                action.z = reachablePositions[i + 4].z;
+                addAgent(action);
+                Physics.SyncTransforms(); // must do this so that when we CapsuleCast we see the most recently added agent
+            }
+            for (int i = 1; i < this.agents.Count; i++) {
+                this.agents[i].m_Camera.depth = 1;
+            }
         }
-
-        this.agentManagerState = AgentState.ActionComplete;
     }
 
     public void ResetSceneBounds() {
@@ -552,7 +509,7 @@ primaryAgent.ProcessControlCommand(action.dynamicServerAction);
         Camera camera = gameObject.GetComponentInChildren<Camera>();
 
         // set up returned image
-        camera.cullingMask = ~(1 << 11);
+        camera.cullingMask = ~LayerMask.GetMask("PlaceableSurface");
         if (renderDepthImage || renderSemanticSegmentation || renderInstanceSegmentation || renderNormalsImage || renderFlowImage) {
             gameObject.AddComponent(typeof(ImageSynthesis));
         }
@@ -1537,7 +1494,7 @@ public class ObjectMetadata {
     // what type of object is this?
     public string objectType;
 
-    // uuid of the object
+    // uuid of the object in scene
     public string objectId;
 
     //name of this game object's prefab asset if it has one
@@ -1653,6 +1610,9 @@ public class ArmMetadata {
 
     // all sim objects that are both pickupable and inside the hand sphere
     public List<String> pickupableObjects;
+
+    // all sim objects that are inside the hand sphere, excluding those currently held
+    public List<String> touchedNotHeldObjects;
 
     // world coordinates of the center of the hand's sphere
     public Vector3 handSphereCenter;
@@ -1893,6 +1853,8 @@ public class ServerAction {
     public int thirdPartyCameraId;
     public float y;
     public float fieldOfView;
+    public float cameraNearPlane;
+    public float cameraFarPlane;
     public float x;
     public float z;
     public float pushAngle;
@@ -1957,7 +1919,6 @@ public class ServerAction {
     public float maxDistance;// used in target circle spawning function
     public float noise;
     public ControllerInitialization controllerInitialization = null;
-    public string agentControllerType = "";
     public string agentMode = "default"; // mode of Agent, valid values are "default" "locobot" "drone", note certain modes are only compatible with certain controller types
 
     public float agentRadius = 2.0f;
@@ -2020,6 +1981,9 @@ public class ServerAction {
     // for the arm to detect collisions and stop moving
     public float? massThreshold;
 
+    // whether to randomize mass of objects
+    public bool randomizeObjectMass = false;
+
 
     public SimObjType ReceptableSimObjType() {
         if (string.IsNullOrEmpty(receptacleObjectType)) {
@@ -2067,6 +2031,23 @@ public class ServerAction {
 public class InitializeReturn {
     public float cameraNearPlane;
     public float cameraFarPlane;
+}
+
+[Serializable]
+[MessagePackObject(keyAsPropertyName: true)]
+public class Geometry3D {
+    public Vector3[] vertices;
+    public int[] triangleIndices;
+    public Vector2[] uvs;
+    public Vector3[] normals;
+}
+
+[Serializable]
+[MessagePackObject(keyAsPropertyName: true)]
+public class ObjectSphereBounds {
+    public string id;
+    public Vector3 worldSpaceCenter;
+    public float radius;
 }
 
 public enum ServerActionErrorCode {

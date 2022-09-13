@@ -7,7 +7,7 @@ using RandomExtensions;
 using UnityEngine.AI;
 
 namespace UnityStandardAssets.Characters.FirstPerson {
-        
+
     public partial class ArmAgentController : PhysicsRemoteFPSAgentController {
         public ArmAgentController(BaseAgentComponent baseAgentComponent, AgentManager agentManager) : base(baseAgentComponent, agentManager) {
         }
@@ -193,6 +193,17 @@ namespace UnityStandardAssets.Characters.FirstPerson {
         public void PickupObject(List<string> objectIdCandidates = null) {
             IK_Robot_Arm_Controller arm = getArm();
             actionFinished(arm.PickupObject(objectIdCandidates, ref errorMessage), errorMessage);
+        }
+        
+        public void PickupObject(float force) {
+            IK_Robot_Arm_Controller arm = getArm();
+            actionFinished(arm.PickupObject(force, ref errorMessage), errorMessage);
+        }
+        
+        public void ChangeGraspForce(float force) {
+            IK_Robot_Arm_Controller arm = getArm();
+            arm.ChangeGraspForce(force);
+            actionFinished(true);
         }
 
         public override void PickupObject(float x, float y, bool forceAction = false, bool manualInteract = false) {

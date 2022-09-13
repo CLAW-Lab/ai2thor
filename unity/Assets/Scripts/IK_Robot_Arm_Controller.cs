@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityStandardAssets.Characters.FirstPerson;
+using System.Linq;
 
 public partial class IK_Robot_Arm_Controller : MonoBehaviour {
     [SerializeField]
@@ -177,7 +178,7 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
                 point0: point0,
                 point1: point1,
                 radius: radius,
-                layerMask: LayerMask.GetMask("SimObjVisible"),
+                layerMask: LayerMask.GetMask("SimObjVisible", "Procedural1", "Procedural2", "Procedural3", "Procedural0"),
                 queryTriggerInteraction: QueryTriggerInteraction.Ignore
             );
             foreach (Collider col in cols) {
@@ -191,7 +192,7 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
                 center: b.transform.TransformPoint(b.center),
                 halfExtents: b.size / 2.0f,
                 orientation: b.transform.rotation,
-                layerMask: LayerMask.GetMask("SimObjVisible"),
+                layerMask: LayerMask.GetMask("SimObjVisible", "Procedural1", "Procedural2", "Procedural3", "Procedural0"),
                 queryTriggerInteraction: QueryTriggerInteraction.Ignore
             );
             foreach (Collider col in cols) {
@@ -556,19 +557,15 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         );
     }
 
-    public List<string> WhatObjectsAreInsideMagnetSphereAsObjectID() {
-        return magnetSphereComp.CurrentlyContainedSimObjectsByID();
-    }
-
-    public List<SimObjPhysics> WhatObjectsAreInsideMagnetSphereAsSOP() {
-        return magnetSphereComp.CurrentlyContainedSimObjects();
+    public List<SimObjPhysics> WhatObjectsAreInsideMagnetSphereAsSOP(bool onlyPickupable) {
+        return magnetSphereComp.CurrentlyContainedSimObjects(onlyPickupable: onlyPickupable);
     }
 
     public IEnumerator ReturnObjectsInMagnetAfterPhysicsUpdate(PhysicsRemoteFPSAgentController controller) {
         yield return new WaitForFixedUpdate();
         List<string> listOfSOP = new List<string>();
-        foreach (string oid in this.WhatObjectsAreInsideMagnetSphereAsObjectID()) {
-            listOfSOP.Add(oid);
+        foreach (SimObjPhysics sop in this.WhatObjectsAreInsideMagnetSphereAsSOP(false)) {
+            listOfSOP.Add(sop.ObjectID);
         }
         Debug.Log("objs: " + string.Join(", ", listOfSOP));
         controller.actionFinished(true, listOfSOP);
@@ -603,7 +600,7 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         bool pickedUp = false;
 
         // grab all sim objects that are currently colliding with magnet sphere
-        foreach (SimObjPhysics sop in WhatObjectsAreInsideMagnetSphereAsSOP()) {
+        foreach (SimObjPhysics sop in WhatObjectsAreInsideMagnetSphereAsSOP(onlyPickupable: true)) {
             if (objectIds != null) {
                 if (!objectIds.Contains(sop.objectID)) {
                     continue;
@@ -692,6 +689,150 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         // note: how to handle cases where object breaks if it is shoved into another object?
         // make them all unbreakable?
         return pickedUp;
+    }
+
+    public bool PickupObject(float force, ref string errorMessage) {
+        // var at = this.transform.InverseTransformPoint(armTarget.position) - new Vector3(0, 0, originToShoulderLength);
+        // Debug.Log("Pickup " + at.magnitude);
+        bool pickedUp = false;
+        string notPickedUpMessage = "No objects are inside the magnet sphere";
+        float remainingForce = force;
+
+        // grab all sim objects that are currently colliding with magnet sphere
+        foreach (SimObjPhysics sop in WhatObjectsAreInsideMagnetSphereAsSOP(onlyPickupable: true)) {
+            Dictionary<GameObject, Vector3> gameObjectToMultipliedScale = getGameObjectToMultipliedScale(
+                go: sop.gameObject,
+                currentScale: new Vector3(1f, 1f, 1f)
+            );
+            Rigidbody rb = sop.GetComponent<Rigidbody>();
+            float mass = sop.MassIncludingSimObjectsInReceptacle();
+            if (mass > remainingForce) {
+                // the error message is only useful if all objects are not picked up
+                // so the it compares weigth and force (== remainingForce)
+                notPickedUpMessage = String.Format("Object weight {0} is heavier than force {1}", mass, force);
+                continue;
+            }
+            rb.isKinematic = true;
+            sop.transform.SetParent(magnetSphere.transform);
+            rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            rb.detectCollisions = false; // Disable detecting of collisions
+
+            if (sop.IsOpenable) {
+                CanOpen_Object coj = sop.gameObject.GetComponent<CanOpen_Object>();
+
+                // if an openable object receives OnTriggerEnter events
+                // the RigidBody can be switched to Kinematic false 
+                coj.triggerEnabled = false;
+            }
+
+            // ok new plan, clone the "myColliders" of the sop and
+            // then set them all to isTrigger = True
+            // and parent them to the correct joint
+            HashSet<Collider> cols = new HashSet<Collider>();
+
+            foreach (Collider c in sop.MyColliders) {
+                // One set of colliders are used to check collisions
+                // with kinematic objects
+                Collider clone = Instantiate(
+                    original: c,
+                    position: c.transform.position,
+                    rotation: c.transform.rotation,
+                    parent: FinalJoint
+                );
+                clone.transform.localScale = gameObjectToMultipliedScale[c.gameObject];
+
+                clone.isTrigger = true;
+                collisionListener.registerChild(clone);
+                cols.Add(clone);
+
+                // The other set is used to interact with moveable objects
+                clone = Instantiate(
+                    original: c,
+                    position: c.transform.position,
+                    rotation: c.transform.rotation,
+                    parent: FinalJoint
+                );
+                clone.transform.localScale = gameObjectToMultipliedScale[c.gameObject];
+                cols.Add(clone);
+
+                // OLD: must disable the colliders on the held object so they  don't interact with anything
+                // PROBLEM: turning off colliders like this causes bounding boxes to be wrongly updated
+                // NEW: We turn on rb.detectCollisions = false above
+                // c.enabled = false;
+            }
+
+            // TODO: Ignore all collisions between arm/held object colliders (for efficiency)!
+            var colliders = this.GetComponentsInChildren<Collider>();
+            foreach (Collider c0 in colliders) {
+                foreach (Collider c1 in cols) {
+                    Physics.IgnoreCollision(c0, c1);
+                }
+            }
+            foreach (Collider c0 in cols) {
+                foreach (Collider c1 in cols) {
+                    Physics.IgnoreCollision(c0, c1);
+                }
+            }
+
+            pickedUp = true;
+            heldObjects.Add(sop, cols);
+            remainingForce -= mass;
+        }
+
+        if (!pickedUp) errorMessage = notPickedUpMessage;
+
+        // note: how to handle cases where object breaks if it is shoved into another object?
+        // make them all unbreakable?
+        return pickedUp;
+    }
+
+    public void ChangeGraspForce(float force) {
+        float remainingForce = force;
+        Dictionary<SimObjPhysics, HashSet<Collider>> newHeldObjects = new Dictionary<SimObjPhysics, HashSet<Collider>>();
+        // grab all sim objects that are currently colliding with magnet sphere
+        foreach (KeyValuePair<SimObjPhysics, HashSet<Collider>> sop in heldObjects) {
+            Rigidbody rb = sop.Key.GetComponent<Rigidbody>();
+            float mass = sop.Key.MassIncludingSimObjectsInReceptacle();
+            if (mass <= remainingForce) {
+                // the object is still within the grasp force
+                remainingForce -= mass;
+                newHeldObjects.Add(sop.Key, sop.Value);
+                continue;
+            }
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            rb.isKinematic = false;
+
+            // delete cloned colliders
+            foreach (Collider c in sop.Value) {
+                Destroy(c.gameObject);
+            }
+
+            // Colliders are no longer disabled on pickup, instead rb.detectCollisions is set to false
+            // Note that rb.detectCollisions is now set to true below.
+            // foreach (Collider c in sop.Key.MyColliders) {
+            //     // re-enable colliders since they were disabled during pickup
+            //     c.enabled = true;
+            // }
+
+            if (sop.Key.IsOpenable) {
+                CanOpen_Object coj = sop.Key.gameObject.GetComponent<CanOpen_Object>();
+                coj.triggerEnabled = true;
+            }
+
+            GameObject topObject = GameObject.Find("Objects");
+
+            if (topObject != null) {
+                sop.Key.transform.parent = topObject.transform;
+            } else {
+                sop.Key.transform.parent = null;
+            }
+
+            rb.detectCollisions = true;
+            rb.WakeUp();
+        }
+
+        // clear all now dropped objects
+        heldObjects = newHeldObjects;
     }
 
     public void DropObject() {
@@ -838,7 +979,11 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         meta.heldObjects = heldObjectIDs;
         meta.handSphereCenter = magnetSphere.transform.TransformPoint(magnetSphere.center);
         meta.handSphereRadius = magnetSphere.radius;
-        meta.pickupableObjects = WhatObjectsAreInsideMagnetSphereAsObjectID();
+        List<SimObjPhysics> objectsInMagnet = WhatObjectsAreInsideMagnetSphereAsSOP(false);
+        meta.pickupableObjects = objectsInMagnet.Where(
+            x => x.PrimaryProperty == SimObjPrimaryProperty.CanPickup
+        ).Select(x => x.ObjectID).ToList();
+        meta.touchedNotHeldObjects = objectsInMagnet.Select(x => x.ObjectID).ToList();
         return meta;
     }
 
