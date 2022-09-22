@@ -2006,7 +2006,7 @@ GameObject:
   - component: {fileID: 882707299545614869}
   - component: {fileID: 7346190366364669359}
   m_Layer: 3
-  m_Name: Text - Raise Arm Base
+  m_Name: Text - Grab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2059,7 +2059,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Raise Arm Base
+  m_text: Grab
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2542,8 +2542,6 @@ MonoBehaviour:
   _armText: {fileID: 321759517}
   _povText: {fileID: 1230835214}
   _fadeTime: 1
-  _rightPrimaryTapReference: {fileID: -7139985065493432836, guid: c348712bda248c246b8c49b3db54643f,
-    type: 3}
   _rightSecondaryHoldReference: {fileID: -5812088336827750757, guid: c348712bda248c246b8c49b3db54643f,
     type: 3}
   _leftMenuPressReference: {fileID: 3189905308771057533, guid: c348712bda248c246b8c49b3db54643f,
@@ -2873,36 +2871,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  _onPickUpObjectEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1862825043938861299}
-        m_TargetAssemblyTypeName: ArmToggle, AI2-THOR-Base
-        m_MethodName: ToggleGrasp
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
   _onToggleGuideEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4610559793569920602}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
       - m_Target: {fileID: 8467628252848529763}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
@@ -2910,6 +2881,19 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 8014459988081960210, guid: a1c124e94159179459f1fb49c885a5e7,
+          type: 3}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -3011,18 +2995,18 @@ MonoBehaviour:
       m_Flags: 0
     m_Reference: {fileID: 6213572706314213896, guid: c348712bda248c246b8c49b3db54643f,
       type: 3}
-  m_RightHandMoveArmBaseAction:
+  m_RightHandGraspAction:
     m_UseReference: 1
     m_Action:
-      m_Name: Right Hand Move Arm Base
+      m_Name: Right Hand Grasp
       m_Type: 0
       m_ExpectedControlType: 
-      m_Id: 386ad204-c992-4508-b50c-49200fcd6079
+      m_Id: 6bc3d230-8ee0-4f99-aa24-de12ec203de2
       m_Processors: 
       m_Interactions: 
       m_SingletonActionBindings: []
       m_Flags: 0
-    m_Reference: {fileID: -2956388064697743500, guid: c348712bda248c246b8c49b3db54643f,
+    m_Reference: {fileID: -7139985065493432836, guid: c348712bda248c246b8c49b3db54643f,
       type: 3}
   m_MoveArmAmount: 0.01
 --- !u!1 &2207387610743123945
@@ -3508,7 +3492,7 @@ GameObject:
   - component: {fileID: 2248385932546051985}
   - component: {fileID: 1067780469042243751}
   m_Layer: 3
-  m_Name: Text - Grab
+  m_Name: Text - Raise Arm Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3561,7 +3545,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Grab
+  m_text: 'Raise Arm Base '
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

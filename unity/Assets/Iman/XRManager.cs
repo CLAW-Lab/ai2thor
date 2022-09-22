@@ -28,7 +28,7 @@ public class XRManager : MonoBehaviour
 
     [Header("Right Input Action References")]
     //[SerializeField] private InputActionReference _rightThumbstickPressReference = null;
-    [SerializeField] private InputActionReference _rightPrimaryTapReference = null;
+    //[SerializeField] private InputActionReference _rightPrimaryTapReference = null;
     //[SerializeField] private InputActionReference _rightSecondaryTapReference = null;
     [SerializeField] private InputActionReference _rightSecondaryHoldReference = null;
     //[SerializeField] private InputActionReference _rightGripPressReference = null;
@@ -53,7 +53,7 @@ public class XRManager : MonoBehaviour
     [SerializeField] private UnityEvent _onResetArmEvent = new UnityEvent();
     [SerializeField] private UnityEvent _onDefaultArmEvent = new UnityEvent();
 
-    [SerializeField] private UnityEvent _onPickUpObjectEvent = new UnityEvent();
+    //[SerializeField] private UnityEvent _onPickUpObjectEvent = new UnityEvent();
 
     [SerializeField] private UnityEvent<bool> _onToggleGuideEvent = new UnityEvent<bool>();
 
@@ -105,7 +105,7 @@ public class XRManager : MonoBehaviour
         //_rightThumbstickPressReference.action.performed += (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
         //_leftThumbstickPressReference.action.performed += (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
 
-        _rightPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleGrasp(); };
+        //_rightPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleGrasp(); };
         //_leftPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { TogglePOV(); };
 
         _leftSecondaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleGuide(); };
@@ -130,7 +130,7 @@ public class XRManager : MonoBehaviour
         //_rightThumbstickPressReference.action.performed -= (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
         //_leftThumbstickPressReference.action.performed -= (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
 
-        _rightPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleGrasp(); };
+        //_rightPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleGrasp(); };
         //_leftPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { TogglePOV(); };
 
         _leftSecondaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleGuide(); };
@@ -276,13 +276,13 @@ public class XRManager : MonoBehaviour
         _onToggleGuideEvent?.Invoke(_showingGuide);
     }
 
-    private void ToggleGrasp() {
-        if (!_isInitialized || !_isArmMode) {
-            return;
-        }
+    // private void ToggleGrasp() {
+    //     if (!_isInitialized || !_isArmMode) {
+    //         return;
+    //     }
 
-        _onPickUpObjectEvent?.Invoke();
-    }
+    //     _onPickUpObjectEvent?.Invoke();
+    // }
 
     private void ResetArm() {
         if (!_isArmMode || !_isInitialized) {
