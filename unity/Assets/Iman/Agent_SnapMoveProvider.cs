@@ -81,7 +81,8 @@ public class Agent_SnapMoveProvider : MonoBehaviour
     protected Vector2 ReadInput() {
         var leftHandValue = m_LeftHandSnapMoveAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
         var rightHandValue = m_RightHandSnapMoveAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
-
+        Debug.Log("[RECORDING ACTION] LeftHandSnapMoveAction "+ "x:"+leftHandValue[0].ToString()+"y:"+leftHandValue[1].ToString());
+        Debug.Log("[RECORDING ACTION] RightHandSnapMoveAction "+ "x:"+rightHandValue[0].ToString()+"y:"+rightHandValue[1].ToString());
         return leftHandValue + rightHandValue;
     }
 

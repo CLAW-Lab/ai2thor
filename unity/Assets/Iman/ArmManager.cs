@@ -225,11 +225,18 @@ public class ArmManager : MonoBehaviour
        var leftHandValue = m_LeftHandMoveArmBaseAction.action?.ReadValue<float>() ?? 0;
     //    var rightHandValue = m_RightHandMoveArmBaseAction.action?.ReadValue<float>() ?? 0;
     //    return rightHandValue - leftHandValue;
+        if (leftHandValue > 0){
+            Debug.Log("[RECORDING ACTION] Direction"+ direction.ToString());
+            Debug.Log("[RECORDING ACTION] LeftHandGrip pressed"+leftHandValue.ToString());
+        }
         return direction * leftHandValue;
    }
  
    protected float ReadGripForce() {
        var rightHandValue = m_RightHandGraspAction.action?.ReadValue<float>() ?? 0;
+       if (rightHandValue > 0){
+            Debug.Log("[RECORDING ACTION] RightHandGrip"+rightHandValue.ToString());
+       }
        return rightHandValue;
    }
  
