@@ -258,7 +258,7 @@ public class XRManager : MonoBehaviour
         if (!_isInitialized || _locomotionMode == ControllerMode.user) {
             return;
         }
-
+        Debug.Log("[RECORDING ACTION] LeftPrimaryButton pressed");
         _isCrouching = !_isCrouching;
         Dictionary<string, object> action = new Dictionary<string, object>();
         
@@ -274,6 +274,7 @@ public class XRManager : MonoBehaviour
     private void ToggleGuide() {
         _showingGuide = !_showingGuide;
         _onToggleGuideEvent?.Invoke(_showingGuide);
+        Debug.Log("[RECORDING ACTION] LeftSecondButton pressed");
     }
 
     // private void ToggleGrasp() {
@@ -288,6 +289,7 @@ public class XRManager : MonoBehaviour
         if (!_isArmMode || !_isInitialized) {
             return;
         }
+        Debug.Log("[RECORDING ACTION] RightSecondaryButton pressed");
 
         StopCoroutine("FadeNotificationCoroutine");
 
@@ -309,6 +311,7 @@ public class XRManager : MonoBehaviour
         if (!_isInitialized) {
             return;
         }
+        Debug.Log("[RECORDING ACTION] LeftMenuButton pressed");
         _armMenu.gameObject.SetActive(!_armMenu.gameObject.activeSelf);
     }
 

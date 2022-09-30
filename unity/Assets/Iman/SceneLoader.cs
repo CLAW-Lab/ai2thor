@@ -175,6 +175,7 @@ public class SceneLoader : MonoBehaviour
     }
 
     private void ToggleSceneSwitchMenu() {
+        Debug.Log("[RECORDING ACTION] sceneSwitchMenu Pressed");
         if (!_sceneSwitchMenu.gameObject.activeSelf) {
             StartCoroutine("FadeInMenu");
             StartCoroutine("SwitchSceneMenuCoroutine");
