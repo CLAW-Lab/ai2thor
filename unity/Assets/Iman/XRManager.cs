@@ -9,6 +9,9 @@ using UnityStandardAssets.Characters.FirstPerson;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using Unity.XR.CoreUtils;
+using Newtonsoft.Json.Linq;
+using Thor.Procedural.Data;
+using Thor.Procedural;
 
 [RequireComponent(typeof(XROrigin))]
 public class XRManager : MonoBehaviour
@@ -170,6 +173,7 @@ public class XRManager : MonoBehaviour
         action["action"] = "Initialize";
         CurrentActiveController().ProcessControlCommand(new DynamicServerAction(action), _agentManager);
 
+        _onUserLocomotionEvent?.Invoke();
         _onInitializedEvent?.Invoke();
 
         _isInitialized = true;
@@ -177,8 +181,26 @@ public class XRManager : MonoBehaviour
 
     private void Start() {
         // Set as user mode
-        _onUserLocomotionEvent?.Invoke();
+        //_onUserLocomotionEvent?.Invoke();
     }
+
+    public void CreateProceduralHouse() {
+       // initialize new house for procthor
+       Dictionary<string, object> action = new Dictionary<string, object>();
+       if (CurrentActiveController().IsProcessing) {
+           Debug.Log("Cannot execute command while last action has not completed.");
+       }
+ 
+       action["action"] = "CreateHouse";
+ 
+       var jsonStr = System.IO.File.ReadAllText(Application.dataPath + "/Resources/rooms/house.json");
+       Debug.Log($"json: {jsonStr}");
+ 
+       JObject obj = JObject.Parse(jsonStr);
+ 
+       action["house"] = obj;
+       CurrentActiveController().ProcessControlCommand(new DynamicServerAction(action));
+   }
 
     // Called when you want to toggle controller mode
     public void ToggleLocomotionMode() {

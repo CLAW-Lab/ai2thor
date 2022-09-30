@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Thor.Procedural.Data;
+using Thor.Procedural;
 
 public class SceneLoader : MonoBehaviour
 {
@@ -102,18 +104,27 @@ public class SceneLoader : MonoBehaviour
     private void SetActiveScene(Scene scene, LoadSceneMode mode) {
         if (scene.buildIndex != _persistentSceneIndex) {
             UnityEngine.SceneManagement.SceneManager.SetActiveScene(scene);
-
             if (_xrManager != null) {
                 DestroyImmediate(_xrManager.gameObject);
                 _xrManager = GameObject.Instantiate(_xrPrefab).GetComponent<XRManager>();
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
+                //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
+                // if(scene.buildIndex == 1) {
+                //     Debug.Log("[SceneLoader.cs] Creating House");
+                //     _xrManager.CreateProceduralHouse();
+                // }
                 ScreenFader.Instance.Alpha = 1;
                 ScreenFader.Instance.StartFadeOut();
             } else {
                 _xrManager = GameObject.Instantiate(_xrPrefab).GetComponent<XRManager>();
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
+                //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
+                // if(scene.buildIndex == 1) {
+                //     Debug.Log("[SceneLoader.cs] Creating House");
+                //     _xrManager.CreateProceduralHouse();
+                // }
             }
 
             GameObject[] agents =  GameObject.FindGameObjectsWithTag("Player");
