@@ -177,6 +177,7 @@ public class XRManager : MonoBehaviour
         _onInitializedEvent?.Invoke();
 
         _isInitialized = true;
+        Debug.Log("[RECORDING ACTION] In Game Start Button Pressed");
     }
 
     private void Start() {
@@ -208,6 +209,7 @@ public class XRManager : MonoBehaviour
             return;
         }
 
+        Debug.Log("[RECORDING ACTION] In Game Toggle Locomotion Button Pressed");
         _locomotionMode = ~_locomotionMode;
         bool value = Convert.ToBoolean((int)_locomotionMode);
 
@@ -231,6 +233,7 @@ public class XRManager : MonoBehaviour
             return;
         }
 
+        Debug.Log("[RECORDING ACTION] In Game Toggle POV Button Pressed");
         _isFPSMode = !_isFPSMode;
 
         StopCoroutine("FadeNotificationCoroutine");
@@ -258,6 +261,8 @@ public class XRManager : MonoBehaviour
         if (!_isInitialized) {
             return;
         }
+
+        Debug.Log("[RECORDING ACTION] In Game Toggle Arm Button Pressed");
         _isArmMode = !_isArmMode;
 
         StopCoroutine("FadeNotificationCoroutine");
@@ -274,6 +279,13 @@ public class XRManager : MonoBehaviour
             _armText.text = _notificationText.text;
             StartCoroutine("FadeNotificationCoroutine");
         }
+    }
+
+    public void ArmReset() {
+        Debug.Log("[RECORDING ACTION] In Game ResetArm Button Pressed");
+
+        ToggleArm();
+        ToggleArm();
     }
 
     private void ToggleCrouch() {

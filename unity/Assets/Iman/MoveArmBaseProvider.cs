@@ -83,8 +83,15 @@ public class MoveArmBaseProvider : MonoBehaviour
     protected Vector2 ReadInput() {
         var leftHandValue = m_LeftHandMoveArmBaseAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
         var rightHandValue = m_RightHandMoveArmBaseAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
-        Debug.Log("[RECORDING ACTION] LeftHandMoveArmBaseAction"+ "x:" + leftHandValue[0].ToString()+"y:"+ leftHandValue[1].ToString());
-        Debug.Log("[RECORDING ACTION] RightHandMoveArmBaseAction"+ "x:" + rightHandValue[0].ToString()+"y:"+ rightHandValue[1].ToString());
+
+        if (leftHandValue.x > 0 || leftHandValue.y > 0) {
+            Debug.Log("[RECORDING ACTION] LeftHandMoveArmBaseAction"+ " x:" + leftHandValue.x.ToString()+" y:"+ leftHandValue.y.ToString());
+        }
+        
+        if (rightHandValue.x > 0 || rightHandValue.y > 0) {
+            Debug.Log("[RECORDING ACTION] RightHandMoveArmBaseAction"+ " x:" + rightHandValue.x.ToString()+" y:"+ rightHandValue.y.ToString());
+        }
+
         return new Vector2(0, (leftHandValue + rightHandValue).y);
     }
 
