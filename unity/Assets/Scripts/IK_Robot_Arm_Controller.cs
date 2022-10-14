@@ -7,7 +7,7 @@ using System.Linq;
 
 public partial class IK_Robot_Arm_Controller : MonoBehaviour {
     [SerializeField]
-    public Transform armBase, armTarget, handCameraTransform, FirstJoint, FinalJoint;
+    private Transform armBase, armTarget, elbowTarget, handCameraTransform, FirstJoint, FinalJoint;
 
     [SerializeField]
     private SphereCollider magnetSphere = null;
@@ -45,6 +45,20 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
 
     public CollisionListener collisionListener;
 
+    public GameObject GetArmBase() {
+        return armBase.gameObject;
+    }
+
+    public GameObject GetArmTarget() {
+        return armTarget.gameObject;
+    }
+        public GameObject GetElbowTarget() {
+        return elbowTarget.gameObject;
+    }
+
+    public GameObject GetMagnetSphere() {
+        return magnetSphere.gameObject;
+    }
 
     void Start() {
         // calculating based on distance from origin of arm to the 2nd joint, which will always be constant
@@ -954,7 +968,7 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
             // ROOT-JOINT RELATIVE ROTATION
             // Root-forward and agent-forward are always the same
 
-            //Grab rotation of current joint's angler relative to root joint
+            // Grab rotation of current joint's angler relative to root joint
             currentRotation = Quaternion.Inverse(armBase.rotation) * joint.GetChild(0).rotation;
 
             // Check that root-relative rotation is angle-axis-notation-compatible
@@ -982,6 +996,9 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
             } else {
                 // Special case for robot_arm_1_jnt because it has no parent-joint
                 jointMeta.localRotation = jointMeta.rootRelativeRotation;
+
+                jointMeta.armBaseHeight = this.transform.localPosition.y;
+                jointMeta.elbowOrientation = elbowTarget.localEulerAngles.z;
             }
 
             joints.Add(jointMeta);

@@ -36,8 +36,8 @@ public class AgentManager : MonoBehaviour {
     protected int robosimsPort = 8200;
     protected string robosimsHost = "127.0.0.1";
     protected string ENVIRONMENT_PREFIX = "AI2THOR_";
-    private Texture2D tex;
-    private Rect readPixelsRect;
+    public Texture2D tex;
+    public Rect readPixelsRect;
     private int currentSequenceId;
     private int activeAgentId;
     private bool renderImage = true;
@@ -908,8 +908,7 @@ public class AgentManager : MonoBehaviour {
         ProcessControlCommand(msg);
     }
 
-    private void createPayload(MultiAgentMetadata multiMeta, ThirdPartyCameraMetadata[] cameraMetadata, List<KeyValuePair<string, byte[]>> renderPayload, bool shouldRender) {
-
+    public void createPayload(MultiAgentMetadata multiMeta, ThirdPartyCameraMetadata[] cameraMetadata, List<KeyValuePair<string, byte[]>> renderPayload, bool shouldRender) {
         multiMeta.agents = new MetadataWrapper[this.agents.Count];
         multiMeta.activeAgentId = this.activeAgentId;
         multiMeta.sequenceId = this.currentSequenceId;
@@ -1064,7 +1063,7 @@ public class AgentManager : MonoBehaviour {
                     agent.agentState = AgentState.Emit;
                 }
             }
-
+                        
             if (!this.canEmit()) {
                 continue;
             }
@@ -1103,12 +1102,9 @@ public class AgentManager : MonoBehaviour {
                         this.sock.Connect(hostep);
                     } catch (SocketException e) {
                         var msg = e.ToString();
-#if UNITY_EDITOR
-                        break;
-#endif
-                        // wrapping the message in !UNITY_EDITOR to avoid unreachable code warning
-#if !UNITY_EDITOR
                         Debug.Log("Socket exception: " + msg);
+#if UNITY_EDITOR        
+                        break;
 #endif
                     }
                 }
@@ -1260,6 +1256,14 @@ public class AgentManager : MonoBehaviour {
 
     public BaseFPSAgentController GetActiveAgent() {
         return this.agents[activeAgentId];
+    }
+
+    public int GetActiveAgentId() {
+        return this.activeAgentId;
+    }
+
+    public int GetThirdPartyCameraCount() {
+        return this.thirdPartyCameras.Count;
     }
 
     private int parseContentLength(string header) {
@@ -1596,6 +1600,8 @@ public class JointMetadata {
     public Vector4 rotation;
     public Vector4 rootRelativeRotation;
     public Vector4 localRotation;
+    public float? armBaseHeight;
+    public float? elbowOrientation;
 }
 
 [Serializable]
