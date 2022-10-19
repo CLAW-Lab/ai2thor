@@ -37,8 +37,10 @@ public class SceneLoader : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += SetActiveScene;
 
         // Loop through all the scenes and create a scene switch button
+        Debug.Log(UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings.ToString());
         for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings; i++) {
             if (i != _persistentSceneIndex) {
+                Debug.Log("Houseeee" + i.ToString());
                 string name = System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(i));
                 Button sceneButton = GameObject.Instantiate(_sceneButtonPrefab, _sceneButtonContainer).GetComponent<Button>();
                 sceneButton.onClick.AddListener(() => { SwitchScene(name); });
@@ -110,10 +112,10 @@ public class SceneLoader : MonoBehaviour
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
                 //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                // if(scene.buildIndex == 1) {
-                //     Debug.Log("[SceneLoader.cs] Creating House");
-                //     _xrManager.CreateProceduralHouse();
-                // }
+                if(scene.buildIndex == 3) {
+                    Debug.Log("[SceneLoader.cs] Creating House");
+                    _xrManager.CreateProceduralHouse();
+                }
                 ScreenFader.Instance.Alpha = 1;
                 ScreenFader.Instance.StartFadeOut();
             } else {
@@ -121,10 +123,10 @@ public class SceneLoader : MonoBehaviour
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
                 //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                // if(scene.buildIndex == 1) {
-                //     Debug.Log("[SceneLoader.cs] Creating House");
-                //     _xrManager.CreateProceduralHouse();
-                // }
+                if(scene.buildIndex == 3) {
+                    Debug.Log("[SceneLoader.cs] Creating House");
+                    _xrManager.CreateProceduralHouse();
+                }
             }
 
             GameObject[] agents =  GameObject.FindGameObjectsWithTag("Player");

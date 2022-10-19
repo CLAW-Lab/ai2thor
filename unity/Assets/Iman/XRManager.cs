@@ -31,7 +31,7 @@ public class XRManager : MonoBehaviour
 
     [Header("Right Input Action References")]
     //[SerializeField] private InputActionReference _rightThumbstickPressReference = null;
-    //[SerializeField] private InputActionReference _rightPrimaryTapReference = null;
+    [SerializeField] private InputActionReference _rightPrimaryTapReference = null;
     //[SerializeField] private InputActionReference _rightSecondaryTapReference = null;
     [SerializeField] private InputActionReference _rightSecondaryHoldReference = null;
     //[SerializeField] private InputActionReference _rightGripPressReference = null;
@@ -56,7 +56,7 @@ public class XRManager : MonoBehaviour
     [SerializeField] private UnityEvent _onResetArmEvent = new UnityEvent();
     [SerializeField] private UnityEvent _onDefaultArmEvent = new UnityEvent();
 
-    //[SerializeField] private UnityEvent _onPickUpObjectEvent = new UnityEvent();
+    [SerializeField] private UnityEvent _onOpenObjectEvent = new UnityEvent();
 
     [SerializeField] private UnityEvent<bool> _onToggleGuideEvent = new UnityEvent<bool>();
 
@@ -91,6 +91,9 @@ public class XRManager : MonoBehaviour
     }
 
     private void Awake() {
+
+        Debug.Log("I'm Up!!!");
+
         // If there is an instance, and it's not me, delete myself.
         if (Instance != null && Instance != this) {
             Destroy(Instance.gameObject);
@@ -98,6 +101,8 @@ public class XRManager : MonoBehaviour
         } else {
             Instance = this;
         }
+
+        Debug.Log("I'm Up 2!!!");
 
         _agentManager = GameObject.Find("PhysicsSceneManager").GetComponentInChildren<AgentManager>();
 
@@ -108,7 +113,7 @@ public class XRManager : MonoBehaviour
         //_rightThumbstickPressReference.action.performed += (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
         //_leftThumbstickPressReference.action.performed += (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
 
-        //_rightPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleGrasp(); };
+        _rightPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleOpenClose(); };
         //_leftPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { TogglePOV(); };
 
         _leftSecondaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleGuide(); };
@@ -133,7 +138,7 @@ public class XRManager : MonoBehaviour
         //_rightThumbstickPressReference.action.performed -= (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
         //_leftThumbstickPressReference.action.performed -= (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
 
-        //_rightPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleGrasp(); };
+        _rightPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleOpenClose(); };
         //_leftPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { TogglePOV(); };
 
         _leftSecondaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleGuide(); };
@@ -311,13 +316,14 @@ public class XRManager : MonoBehaviour
         Debug.Log("[RECORDING ACTION] LeftSecondButton pressed");
     }
 
-    // private void ToggleGrasp() {
-    //     if (!_isInitialized || !_isArmMode) {
-    //         return;
-    //     }
+    private void ToggleOpenClose() {
+        Debug.Log("Check 1 Okayy");
+        if (!_isInitialized || !_isArmMode) {
+            return;
+        }
 
-    //     _onPickUpObjectEvent?.Invoke();
-    // }
+        _onOpenObjectEvent?.Invoke();
+    }
 
     private void ResetArm() {
         if (!_isArmMode || !_isInitialized) {
@@ -390,6 +396,12 @@ public class XRManager : MonoBehaviour
     }
     public void RemoveListenerToInitializeEvent(UnityAction action) {
         _onInitializedEvent.RemoveListener(action);
+    }
+    public void AddListenerToOpenObjectEvent(UnityAction action) {
+        _onOpenObjectEvent.AddListener(action);
+    }
+    public void RemoveListenerToOpenObjectEvent(UnityAction action) {
+        _onOpenObjectEvent.RemoveListener(action);
     }
 
 }
