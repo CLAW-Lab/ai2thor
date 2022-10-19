@@ -261,7 +261,6 @@ public class ArmManager : MonoBehaviour
    }
 
    public void ToggleOpenOrClose() {
-       Debug.Log("Check 2 Okayy");
        var armAgent = (ArmAgentController)_agentManager.PrimaryAgent;
        var arm = armAgent.getArm();
 
@@ -275,7 +274,6 @@ public class ArmManager : MonoBehaviour
 
     public bool OpenOrCloseObject(List<SimObjPhysics> objects, ref string errorMessage) {
         bool hasOpenedOrClosed = false;
-        Debug.Log("Check 3 Okayy");
         foreach(SimObjPhysics sop in objects) {
             if (sop.IsOpenable) {
                 Debug.Log(sop.ObjectID);
@@ -283,12 +281,10 @@ public class ArmManager : MonoBehaviour
                 coj.triggerEnabled = false;
                 if (coj) {
                     if (!coj.isOpen) {
-                        Debug.Log("Check 4 Okayy");
                         _armAgent.OpenObject(objectId: sop.objectID, forceAction: true, useGripper: true);
                         hasOpenedOrClosed = true;
                     } 
                     else if (coj.isOpen) {
-                        Debug.Log("Check 5 Okayy");
                         _armAgent.CloseObject(objectId: sop.objectID, forceAction: true, useGripper: true);
                         hasOpenedOrClosed = true;
                     }

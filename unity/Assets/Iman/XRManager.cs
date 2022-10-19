@@ -178,7 +178,7 @@ public class XRManager : MonoBehaviour
         action["action"] = "Initialize";
         CurrentActiveController().ProcessControlCommand(new DynamicServerAction(action), _agentManager);
 
-        _onUserLocomotionEvent?.Invoke();
+        // _onUserLocomotionEvent?.Invoke();
         _onInitializedEvent?.Invoke();
 
         _isInitialized = true;
@@ -187,7 +187,7 @@ public class XRManager : MonoBehaviour
 
     private void Start() {
         // Set as user mode
-        //_onUserLocomotionEvent?.Invoke();
+        _onUserLocomotionEvent?.Invoke();
     }
 
     public void CreateProceduralHouse() {

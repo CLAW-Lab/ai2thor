@@ -42,6 +42,7 @@ public class SceneLoader : MonoBehaviour
             if (i != _persistentSceneIndex) {
                 Debug.Log("Houseeee" + i.ToString());
                 string name = System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(i));
+                Debug.Log(name);
                 Button sceneButton = GameObject.Instantiate(_sceneButtonPrefab, _sceneButtonContainer).GetComponent<Button>();
                 sceneButton.onClick.AddListener(() => { SwitchScene(name); });
                 sceneButton.GetComponentInChildren<TMP_Text>().text = name;
@@ -112,10 +113,10 @@ public class SceneLoader : MonoBehaviour
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
                 //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                if(scene.buildIndex == 3) {
-                    Debug.Log("[SceneLoader.cs] Creating House");
-                    _xrManager.CreateProceduralHouse();
-                }
+                // if(scene.buildIndex == 3) {
+                //     Debug.Log("[SceneLoader.cs] Creating House");
+                //     _xrManager.CreateProceduralHouse();
+                // }
                 ScreenFader.Instance.Alpha = 1;
                 ScreenFader.Instance.StartFadeOut();
             } else {
@@ -123,10 +124,10 @@ public class SceneLoader : MonoBehaviour
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
                 //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                if(scene.buildIndex == 3) {
-                    Debug.Log("[SceneLoader.cs] Creating House");
-                    _xrManager.CreateProceduralHouse();
-                }
+                // if(scene.buildIndex == 3) {
+                //     Debug.Log("[SceneLoader.cs] Creating House");
+                //     _xrManager.CreateProceduralHouse();
+                // }
             }
 
             GameObject[] agents =  GameObject.FindGameObjectsWithTag("Player");
