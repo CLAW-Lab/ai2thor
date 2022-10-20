@@ -5213,6 +5213,7 @@ namespace UnityStandardAssets.Characters.FirstPerson {
         }
 
         public void CreateHouse(ProceduralHouse house) {
+            Debug.Log("Reached Here 3");
             var rooms = house.rooms.SelectMany(room => house.rooms);
 
             var materials = ProceduralTools.GetMaterials();
@@ -5226,6 +5227,8 @@ namespace UnityStandardAssets.Characters.FirstPerson {
                     new List<string>() { house.proceduralParameters.ceilingMaterial.name }
                 )
             );
+
+            Debug.Log("Reached Here 4");
             var missingIds = materialIds.Where(id => id != null && !materials.ContainsKey(id));
             if (missingIds.Count() > 0) {
                 actionFinished(
@@ -5238,6 +5241,7 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             }
 
             try {
+                Debug.Log("Reached Here 5");
                 ProceduralTools.CreateHouse(house: house, materialDb: materials);
             } 
             catch (Exception e) {
