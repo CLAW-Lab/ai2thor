@@ -29,33 +29,48 @@ public class SceneLoader : MonoBehaviour
     private bool _isSwitchingScene = false;
     private XROrigin _xrOrigin;
     private CanvasGroup _canvasGroup;
+    public TextAsset jsonText;   
 
     private void Awake() {
-        if (UnityEngine.SceneManagement.SceneManager.sceneCount == 1 && UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 0) {
-            UnityEngine.SceneManagement.SceneManager.LoadScene(1, LoadSceneMode.Additive);
-        }
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded += SetActiveScene;
+        // if (UnityEngine.SceneManagement.SceneManager.sceneCount == 1 && UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 0) {
+        //     UnityEngine.SceneManagement.SceneManager.LoadScene(1, LoadSceneMode.Additive);
+        // }
+
+
+        //UnityEngine.SceneManagement.SceneManager.sceneLoaded += SetActiveScene;
 
         // Loop through all the scenes and create a scene switch button
         Debug.Log(UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings.ToString());
-        for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings; i++) {
-            if (i != _persistentSceneIndex) {
-                Debug.Log("Houseeee" + i.ToString());
-                string name = System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(i));
-                Debug.Log(name);
-                Button sceneButton = GameObject.Instantiate(_sceneButtonPrefab, _sceneButtonContainer).GetComponent<Button>();
-                sceneButton.onClick.AddListener(() => { SwitchScene(name); });
-                sceneButton.GetComponentInChildren<TMP_Text>().text = name;
-            }
-        }
+        // for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings; i++) {
+        //     if (i != _persistentSceneIndex) {
+        //         Debug.Log("Houseeee" + i.ToString());
+        //         string name = System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(i));
+        //         Debug.Log(name);
+        //         Button sceneButton = GameObject.Instantiate(_sceneButtonPrefab, _sceneButtonContainer).GetComponent<Button>();
+        //         sceneButton.onClick.AddListener(() => { SwitchScene(name); });
+        //         sceneButton.GetComponentInChildren<TMP_Text>().text = name;
+        //     }
+        // }
 
-        _leftMenuHoldReference.action.performed += (InputAction.CallbackContext context) => { ToggleSceneSwitchMenu(); };
+        
 
+        // _leftMenuHoldReference.action.performed += (InputAction.CallbackContext context) => { ToggleSceneSwitchMenu(); };
+
+        
+    }
+
+    private void Start() {
+        SetActiveScene();
+        StartCoroutine(WaitAndCreateHouseCoroutine(jsonText.text));
+        Button sceneButton = GameObject.Instantiate(_sceneButtonPrefab, _sceneButtonContainer).GetComponent<Button>();
+        sceneButton.onClick.AddListener(() => { CreateHouse(jsonText.text); });
+        sceneButton.GetComponentInChildren<TMP_Text>().text = "CreateHouse";
         _canvasGroup = _sceneSwitchMenu.GetComponent<CanvasGroup>();
+
     }
 
     private void OnDestroy() {
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded += SetActiveScene;
+        //UnityEngine.SceneManagement.SceneManager.sceneLoaded += SetActiveScene;
     }
 
 
@@ -104,40 +119,65 @@ public class SceneLoader : MonoBehaviour
         _isSwitchingScene = false;
     }
 
-    private void SetActiveScene(Scene scene, LoadSceneMode mode) {
-        if (scene.buildIndex != _persistentSceneIndex) {
-            UnityEngine.SceneManagement.SceneManager.SetActiveScene(scene);
+    private void SetActiveScene() {
+        //if (scene.buildIndex != _persistentSceneIndex) {
+            //UnityEngine.SceneManagement.SceneManager.SetActiveScene();
             if (_xrManager != null) {
                 DestroyImmediate(_xrManager.gameObject);
                 _xrManager = GameObject.Instantiate(_xrPrefab).GetComponent<XRManager>();
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
-                if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                    Debug.Log("[SceneLoader.cs] Creating House");
-                    _xrManager.CreateProceduralHouse();
-                }
+                //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural_VR") {
+                    //Debug.Log("[SceneLoader.cs] Creating House");
+                    //_xrManager.CreateProceduralHouse();
+                    //StartCoroutine(WaitAndCreateHouseCoroutine(_xrManager));
+                //}
                 ScreenFader.Instance.Alpha = 1;
                 ScreenFader.Instance.StartFadeOut();
             } else {
                 _xrManager = GameObject.Instantiate(_xrPrefab).GetComponent<XRManager>();
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
-                if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                    Debug.Log("[SceneLoader.cs] Creating House");
-                    _xrManager.CreateProceduralHouse();
-                }
+                // if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural_VR") {
+                //     Debug.Log("[SceneLoader.cs] Creating House");
+                //     StartCoroutine(WaitAndCreateHouseCoroutine(_xrManager));
+                // }
             }
 
             GameObject[] agents =  GameObject.FindGameObjectsWithTag("Player");
             if (agents.Length > 0) {
                 Vector3 pos = agents[0].transform.position;
-                pos.y = _xrManager.transform.position.y;
+                pos.y = _xrManager.transform.position.y-5;
                 _xrManager.transform.position = pos;
             }
 
+            // if (agents.Length > 0) {
+            //     Vector3 pos = agents[0].transform.position;
+            //     pos.y = agents[0].transform.position.y + 100;
+            //     agents[0].transform.position = pos;
+            // }
+
             _xrOrigin = _xrManager.GetComponent<XROrigin>();
             _sceneSwitchMenu.worldCamera = _xrOrigin.Camera;
+        //}
+    }
+
+    public void CreateHouse(string text) {
+        if (_xrManager != null) {
+            _xrManager.CreateProceduralHouse(text);
         }
+    }
+
+    IEnumerator WaitAndCreateHouseCoroutine(string text) {
+        //Print the time of when the function is first called.
+        Debug.Log("Started Coroutine at timestamp : " + Time.time);
+
+        //yield on a new YieldInstruction that waits for 5 seconds.
+        yield return new WaitForSeconds(10);
+        CreateHouse(text);
+
+        //After we have waited 5 seconds print the time again.
+        Debug.Log("Finished Coroutine at timestamp : " + Time.time);
     }
 
     public void SwitchScene(string name) {

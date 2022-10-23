@@ -1907,6 +1907,7 @@ namespace UnityStandardAssets.Characters.FirstPerson {
         // Once all those invocations have been converted to Dictionary<string, object>
         // this can be removed
         public void ProcessControlCommand(ServerAction serverAction) {
+            Debug.Log(serverAction.action);
             lastActionInitialPhysicsSimulateCount = PhysicsSceneManager.PhysicsSimulateCallCount;
             errorMessage = "";
             errorCode = ServerActionErrorCode.Undefined;

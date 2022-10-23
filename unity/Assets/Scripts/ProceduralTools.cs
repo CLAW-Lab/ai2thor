@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Thor.Procedural.Data;
 using UnityEngine.AI;
+using System.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
@@ -464,6 +465,7 @@ namespace Thor.Procedural {
             foreach (var wallTuples in zip3) {
                 foreach ((Wall w0, Wall w1, Wall w2) in wallTuples) {
                     if (!w0.empty) {
+                        Debug.Log($"{w0.id}");
                         var wallGO = createAndJoinWall(
                             index,
                             materialDb,
@@ -1217,8 +1219,10 @@ namespace Thor.Procedural {
                 withRigidBody: false
             );
 
+            Debug.Log("Reached Here 8");
             for (int i = 0; i < house.rooms.Count(); i++) {
                 var room = house.rooms.ElementAt(i);
+                Debug.Log($"{room.id}: polygon: {room.floorPolygon[0]}");
                 var subFloorGO = createSimObjPhysicsGameObject(room.id);
                 var mesh = ProceduralTools.GenerateFloorMesh(room.floorPolygon);
 
@@ -1282,12 +1286,16 @@ namespace Thor.Procedural {
 
             var receptacleTriggerBox = ProceduralTools.createFloorReceptacle(floorGameObject, rectangle, receptacleHeight);
             var collider = ProceduralTools.createFloorCollider(floorGameObject, rectangle, floorColliderThickness);
-
+            
+            Debug.Log("Reached Here 9");
+            
             ProceduralTools.setRoomSimObjectPhysics(floorGameObject, simObjId, visibilityPoints, receptacleTriggerBox, collider.GetComponentInChildren<Collider>());
 
             var structureGO = new GameObject(DefaultRootStructureObjectName);
 
             var wallsGO = ProceduralTools.createWalls(walls, materialDb, house.proceduralParameters, DefaultRootWallsObjectName);
+            
+            Debug.Log("Reached Here 10");
 
             floorGameObject.transform.parent = structureGO.transform;
             wallsGO.transform.parent = structureGO.transform;
@@ -1346,6 +1354,7 @@ namespace Thor.Procedural {
             }
 
             foreach (var obj in house.objects) {
+                Debug.Log($"{obj.id}");
                 spawnObjectHierarchy(obj);
             }
 
@@ -1402,6 +1411,8 @@ namespace Thor.Procedural {
                     tagObjectNavmesh(go, "Not Walkable");
                 }
             }
+            
+            Debug.Log("Reached Here 11");
 
             var lightingRoot = new GameObject(DefaultLightingRootName);
             if (house.proceduralParameters.lights != null) {
@@ -1460,6 +1471,7 @@ namespace Thor.Procedural {
             DynamicGI.UpdateEnvironment();
             GameObject.FindObjectOfType<ReflectionProbe>().GetComponent<ReflectionProbe>().RenderProbe();
 
+
             // generate objectId for newly created wall/floor objects
             // also add them to objectIdToSimObjPhysics dict so they can be found via
             // getTargetObject() and other things that use that dict
@@ -1470,6 +1482,7 @@ namespace Thor.Procedural {
             agentManager.ResetSceneBounds();
 
             setAgentPose(house: house, agentManager: agentManager);
+            Debug.Log("Reached Here 12");
 
             return floorGameObject;
         }
