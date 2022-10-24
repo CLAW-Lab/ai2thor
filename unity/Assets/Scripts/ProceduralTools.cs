@@ -1171,7 +1171,6 @@ namespace Thor.Procedural {
            Vector3? position = null
        ) {
             // raise exception if metadata contains schema
-            Debug.Log("Reached Here 7");
             if (house.metadata == null || house.metadata.schema == null) {
                 throw new ArgumentException(
                     $"House metadata schema not specified! Should be under house['metadata']['schema']." +

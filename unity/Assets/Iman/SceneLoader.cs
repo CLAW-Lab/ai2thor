@@ -112,20 +112,22 @@ public class SceneLoader : MonoBehaviour
                 _xrManager = GameObject.Instantiate(_xrPrefab).GetComponent<XRManager>();
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
-                if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                    Debug.Log("[SceneLoader.cs] Creating House");
-                    _xrManager.CreateProceduralHouse();
-                }
+                //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
+                // if(scene.buildIndex == 3) {
+                //     Debug.Log("[SceneLoader.cs] Creating House");
+                //     _xrManager.CreateProceduralHouse();
+                // }
                 ScreenFader.Instance.Alpha = 1;
                 ScreenFader.Instance.StartFadeOut();
             } else {
                 _xrManager = GameObject.Instantiate(_xrPrefab).GetComponent<XRManager>();
                 _xrManager.transform.SetParent(this.transform);
                 _xrManager.transform.SetParent(null);
-                if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
-                    Debug.Log("[SceneLoader.cs] Creating House");
-                    _xrManager.CreateProceduralHouse();
-                }
+                //if(System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(scene.buildIndex)) == "Procedural") {
+                // if(scene.buildIndex == 3) {
+                //     Debug.Log("[SceneLoader.cs] Creating House");
+                //     _xrManager.CreateProceduralHouse();
+                // }
             }
 
             GameObject[] agents =  GameObject.FindGameObjectsWithTag("Player");
