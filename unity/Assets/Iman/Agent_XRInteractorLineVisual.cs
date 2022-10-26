@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -445,7 +445,7 @@ public class Agent_XRInteractorLineVisual : MonoBehaviour, IXRCustomReticleProvi
     bool TryFindLineRenderer() {
         m_LineRenderer = GetComponent<LineRenderer>();
         if (m_LineRenderer == null) {
-            Debug.LogWarning("No Line Renderer found for Interactor Line Visual.", this);
+            Debug.LogWarning("[RECORDING ACTION] No Line Renderer found for Interactor Line Visual.", this);
             enabled = false;
             return false;
         }

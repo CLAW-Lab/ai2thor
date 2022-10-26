@@ -5291,6 +5291,7 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             float? moveMagnitude = null // moveMagnitude is supported for backwards compatibility. Its new name is 'openness'.
         ) {
             SimObjPhysics target = getInteractableSimObjectFromId(objectId: objectId, forceAction: forceAction);
+            Debug.Log("Check 6 Okayy");
             openObject(
                 target: target,
                 openness: openness,

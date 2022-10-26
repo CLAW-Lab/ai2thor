@@ -2072,7 +2072,6 @@ namespace UnityStandardAssets.Characters.FirstPerson {
             return null;
         }
 
-
     // Helper method that parses objectId parameter to return the sim object that it target.
     // The action is halted if the objectId does not appear in the scene.
     protected SimObjPhysics getInteractableSimObjectFromId(string objectId, bool forceAction = false) {

@@ -29,7 +29,7 @@ public class LocomotionToggle : MonoBehaviour {
     private GameObject _agentFloorCol;
     private GameObject _userFloorCol;
 
-    void Start() { 
+    public void Initialize() { 
         var floor = GameObject.FindGameObjectsWithTag("SimObjPhysics").Single(i => i.GetComponent<SimObjPhysics>() != null && i.GetComponent<SimObjPhysics>().Type == SimObjType.Floor).GetComponent<SimObjPhysics>();
         if (floor != null) {
             _userFloorCol = floor.MyColliders[0].gameObject;

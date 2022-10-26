@@ -9,6 +9,9 @@ using UnityStandardAssets.Characters.FirstPerson;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using Unity.XR.CoreUtils;
+using Newtonsoft.Json.Linq;
+using Thor.Procedural.Data;
+using Thor.Procedural;
 
 [RequireComponent(typeof(XROrigin))]
 public class XRManager : MonoBehaviour
@@ -53,7 +56,7 @@ public class XRManager : MonoBehaviour
     [SerializeField] private UnityEvent _onResetArmEvent = new UnityEvent();
     [SerializeField] private UnityEvent _onDefaultArmEvent = new UnityEvent();
 
-    [SerializeField] private UnityEvent _onPickUpObjectEvent = new UnityEvent();
+    [SerializeField] private UnityEvent _onOpenObjectEvent = new UnityEvent();
 
     [SerializeField] private UnityEvent<bool> _onToggleGuideEvent = new UnityEvent<bool>();
 
@@ -88,6 +91,7 @@ public class XRManager : MonoBehaviour
     }
 
     private void Awake() {
+
         // If there is an instance, and it's not me, delete myself.
         if (Instance != null && Instance != this) {
             Destroy(Instance.gameObject);
@@ -105,7 +109,8 @@ public class XRManager : MonoBehaviour
         //_rightThumbstickPressReference.action.performed += (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
         //_leftThumbstickPressReference.action.performed += (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
 
-        _rightPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleGrasp(); };
+        _rightPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleOpenClose(); };
+        
         //_leftPrimaryTapReference.action.performed += (InputAction.CallbackContext context) => { TogglePOV(); };
 
         _leftSecondaryTapReference.action.performed += (InputAction.CallbackContext context) => { ToggleGuide(); };
@@ -130,7 +135,8 @@ public class XRManager : MonoBehaviour
         //_rightThumbstickPressReference.action.performed -= (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
         //_leftThumbstickPressReference.action.performed -= (InputAction.CallbackContext context) => { ToggleMoveArmBase(); };
 
-        _rightPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleGrasp(); };
+        _rightPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleOpenClose(); };
+
         //_leftPrimaryTapReference.action.performed -= (InputAction.CallbackContext context) => { TogglePOV(); };
 
         _leftSecondaryTapReference.action.performed -= (InputAction.CallbackContext context) => { ToggleGuide(); };
@@ -170,21 +176,43 @@ public class XRManager : MonoBehaviour
         action["action"] = "Initialize";
         CurrentActiveController().ProcessControlCommand(new DynamicServerAction(action), _agentManager);
 
+        _onUserLocomotionEvent?.Invoke();
         _onInitializedEvent?.Invoke();
 
         _isInitialized = true;
+        Debug.Log("[RECORDING ACTION] In Game Start Button Pressed");
     }
 
     private void Start() {
         // Set as user mode
-        _onUserLocomotionEvent?.Invoke();
+        //_onUserLocomotionEvent?.Invoke();
     }
+
+    public void CreateProceduralHouse() {
+       // initialize new house for procthor
+       Dictionary<string, object> action = new Dictionary<string, object>();
+       if (CurrentActiveController().IsProcessing) {
+           Debug.Log("Cannot execute command while last action has not completed.");
+       }
+ 
+       action["action"] = "CreateHouse";
+ 
+       var jsonStr = System.IO.File.ReadAllText(Application.dataPath + "/Resources/rooms/house.json");
+       Debug.Log($"json: {jsonStr}");
+ 
+       JObject obj = JObject.Parse(jsonStr);
+ 
+       action["house"] = obj;
+       CurrentActiveController().ProcessControlCommand(new DynamicServerAction(action));
+   }
 
     // Called when you want to toggle controller mode
     public void ToggleLocomotionMode() {
         if (!_isInitialized) {
             return;
         }
+
+        Debug.Log("[RECORDING ACTION] In Game Toggle Locomotion Button Pressed");
 
         _locomotionMode = ~_locomotionMode;
         bool value = Convert.ToBoolean((int)_locomotionMode);
@@ -208,6 +236,8 @@ public class XRManager : MonoBehaviour
         if (!_isInitialized) {
             return;
         }
+
+        Debug.Log("[RECORDING ACTION] In Game Toggle POV Button Pressed");
 
         _isFPSMode = !_isFPSMode;
 
@@ -236,6 +266,9 @@ public class XRManager : MonoBehaviour
         if (!_isInitialized) {
             return;
         }
+
+        Debug.Log("[RECORDING ACTION] In Game Toggle Arm Button Pressed");
+
         _isArmMode = !_isArmMode;
 
         StopCoroutine("FadeNotificationCoroutine");
@@ -254,10 +287,19 @@ public class XRManager : MonoBehaviour
         }
     }
 
+    public void ArmReset() {
+        Debug.Log("[RECORDING ACTION] In Game ResetArm Button Pressed");
+
+        ToggleArm();
+        ToggleArm();
+    }
+
     private void ToggleCrouch() {
         if (!_isInitialized || _locomotionMode == ControllerMode.user) {
             return;
         }
+
+        Debug.Log("[RECORDING ACTION] LeftPrimaryButton pressed");
 
         _isCrouching = !_isCrouching;
         Dictionary<string, object> action = new Dictionary<string, object>();
@@ -274,20 +316,26 @@ public class XRManager : MonoBehaviour
     private void ToggleGuide() {
         _showingGuide = !_showingGuide;
         _onToggleGuideEvent?.Invoke(_showingGuide);
+
+        Debug.Log("[RECORDING ACTION] LeftSecondButton pressed");
     }
 
-    private void ToggleGrasp() {
+    private void ToggleOpenClose() {
+        Debug.Log("Check 1 Okayy");
+
         if (!_isInitialized || !_isArmMode) {
             return;
         }
+        _onOpenObjectEvent?.Invoke();
 
-        _onPickUpObjectEvent?.Invoke();
     }
 
     private void ResetArm() {
         if (!_isArmMode || !_isInitialized) {
             return;
         }
+
+        Debug.Log("[RECORDING ACTION] RightSecondaryButton pressed");
 
         StopCoroutine("FadeNotificationCoroutine");
 
@@ -309,6 +357,8 @@ public class XRManager : MonoBehaviour
         if (!_isInitialized) {
             return;
         }
+
+        Debug.Log("[RECORDING ACTION] LeftMenuButton pressed");
         _armMenu.gameObject.SetActive(!_armMenu.gameObject.activeSelf);
     }
 
@@ -354,5 +404,12 @@ public class XRManager : MonoBehaviour
     public void RemoveListenerToInitializeEvent(UnityAction action) {
         _onInitializedEvent.RemoveListener(action);
     }
+    public void AddListenerToOpenObjectEvent(UnityAction action) {
+        _onOpenObjectEvent.AddListener(action);
+    }
+    public void RemoveListenerToOpenObjectEvent(UnityAction action) {
+        _onOpenObjectEvent.RemoveListener(action);
+    }
+
 
 }

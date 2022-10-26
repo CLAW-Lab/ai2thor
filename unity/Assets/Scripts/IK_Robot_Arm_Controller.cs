@@ -333,15 +333,23 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
 
         // TODO Remove this after restrict movement is finalized
         Vector3 targetShoulderSpace = (this.transform.InverseTransformPoint(targetWorldPos) - new Vector3(0, 0, originToShoulderLength));
-
+        Debug.Log(
+            $"[RECORDING ACTION] pos target {target} world {targetWorldPos} remaining {targetShoulderSpace.z}\n" +
+            $"[RECORDING ACTION] magnitude {targetShoulderSpace.magnitude} extendedArmLength {extendedArmLength}"
+        );
 #if UNITY_EDITOR
         Debug.Log(
             $"pos target {target} world {targetWorldPos} remaining {targetShoulderSpace.z}\n" +
             $"magnitude {targetShoulderSpace.magnitude} extendedArmLength {extendedArmLength}"
         );
+
 #endif
 
         if (restrictTargetPosition && !validArmTargetPosition(targetWorldPos)) {
+            Debug.Log(
+            $"[RECORDING ACTION] pos target {target} world {targetWorldPos} remaining {targetShoulderSpace.z}\n" +
+            $"[RECORDING ACTION] magnitude {targetShoulderSpace.magnitude} extendedArmLength {extendedArmLength}"
+            );
             targetShoulderSpace = (
                 this.transform.InverseTransformPoint(targetWorldPos)
                 - new Vector3(0, 0, originToShoulderLength)
@@ -403,6 +411,7 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         }
 
         Vector3 target = new Vector3(this.transform.position.x, height, this.transform.position.z);
+        Debug.Log("[RECORDING ACTION] moveArmBase "+ "x:"+target[0].ToString()+"y:"+target[1].ToString()+"z:"+target[2].ToString());
         IEnumerator moveCall = resetArmTargetPositionRotationAsLastStep(
                 ContinuousMovement.move(
                 controller: controller,
@@ -443,6 +452,7 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         float minY = capsuleWorldCenter.y + (-cc.height / 2f) / 2f;
         float targetY = this.transform.position.y + distance;
         targetY = Mathf.Max(Mathf.Min(targetY, maxY), minY);
+        Debug.Log("[RECORDING ACTION] moveArmBaseUp targetY"+targetY.ToString());
 
         moveArmBase(
             controller: controller,
@@ -465,18 +475,27 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         bool returnToStartPositionIfFailed = false
     ) {
         collisionListener.Reset();
+        
         IEnumerator rotate = resetArmTargetPositionRotationAsLastStep(
             ContinuousMovement.rotateAroundPoint(
                 controller: controller,
                 collisionListener: collisionListener,
                 updateTransform: armTarget.transform,
+                
                 rotatePoint: rotatePoint,
+                
                 targetRotation: rotation,
+                
                 fixedDeltaTime: disableRendering ? fixedDeltaTime : Time.fixedDeltaTime,
                 degreesPerSecond: degreesPerSecond,
                 returnToStartPropIfFailed: returnToStartPositionIfFailed
             )
+            
         );
+        Debug.Log("[RECORDING ACTION] rotateWristAroundPoint: updateTransform"+armTarget.transform.ToString());
+        Debug.Log("[RECORDING ACTION] rotateWristAroundPoint: rotatePoint"+rotatePoint.ToString());
+        
+        Debug.Log("[RECORDING ACTION] rotateWristAroundPoint: targetRotation"+rotation.ToString());
 
         if (disableRendering) {
             controller.unrollSimulatePhysics(
@@ -530,6 +549,8 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         collisionListener.Reset();
         GameObject poleManipulator = GameObject.Find("IK_pole_manipulator");
         Quaternion rotation = Quaternion.Euler(0f, 0f, degrees);
+        Debug.Log("[RECORDING ACTION] rotateElbowRelative: degrees"+degrees.ToString());
+        Debug.Log("[RECORDING ACTION] rotateElbowRelative: degreesPerSecond"+degreesPerSecond.ToString());
         IEnumerator rotate = resetArmTargetPositionRotationAsLastStep(
             ContinuousMovement.rotate(
                 controller,
@@ -561,9 +582,11 @@ public partial class IK_Robot_Arm_Controller : MonoBehaviour {
         bool returnToStartPositionIfFailed = false
     ) {
         GameObject poleManipulator = GameObject.Find("IK_pole_manipulator");
+        Debug.Log("[RECORDING ACTION] rotateElbow: degrees"+degrees.ToString());
         rotateElbowRelative(
             controller: controller,
             degrees: (degrees - poleManipulator.transform.eulerAngles.z),
+            
             degreesPerSecond: degreesPerSecond,
             disableRendering: disableRendering,
             fixedDeltaTime: fixedDeltaTime,
