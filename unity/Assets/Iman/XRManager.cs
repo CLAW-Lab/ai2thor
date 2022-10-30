@@ -171,6 +171,7 @@ public class XRManager : MonoBehaviour
         CurrentActiveController().ProcessControlCommand(new DynamicServerAction(action), _agentManager);
 
         _onInitializedEvent?.Invoke();
+        CurrentActiveController().randomizeObjectMass();
 
         _isInitialized = true;
     }
