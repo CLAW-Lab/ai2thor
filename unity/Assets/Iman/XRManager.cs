@@ -180,6 +180,7 @@ public class XRManager : MonoBehaviour
 
         _onUserLocomotionEvent?.Invoke();
         _onInitializedEvent?.Invoke();
+        CurrentActiveController().randomizeObjectMass();
 
         _isInitialized = true;
         Debug.Log("[RECORDING ACTION] In Game Start Button Pressed");
