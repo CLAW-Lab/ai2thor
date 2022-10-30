@@ -163,6 +163,8 @@ public class Agent_SnapTurnProvider : MonoBehaviour
                 break;
         }
         if (action["action"] != null) {
+            Debug.Log("[I]");
+            AManager.agentSteps+=1;
             agent.ProcessControlCommand(action);
         }
 

@@ -85,6 +85,11 @@ public class ArmManager : MonoBehaviour
    private float _armHeight;
    private float _graspForce;
    private int direction = -1;
+   private Vector3 _prevPos;
+   private Vector3 _prevRot;
+   private float _prevGrasp;
+   public int steps = 0;
+
  
    private ArmAgentController _armAgent;
    private IK_Robot_Arm_Controller _arm;
@@ -107,6 +112,8 @@ public class ArmManager : MonoBehaviour
        _defaultPos = arm.armTarget.localPosition;
        _defaultRot = arm.armTarget.localEulerAngles;
        _defaultArmHeight = arm.transform.localPosition.y;
+       _prevPos = _defaultPos;
+       _prevRot = _defaultRot;
        _isInitialized = true;
    }
  
@@ -149,8 +156,53 @@ public class ArmManager : MonoBehaviour
        Vector3 capsuleWorldCenter = cc.transform.TransformPoint(cc.center);
  
        while (true) {
+
+            if (steps + _agentManager.agentSteps == 1500) {
+                Debug.Log($"[STEPS COMPLETED] {steps + _agentManager.agentSteps}");
+            }
+
+            else {
+                Debug.Log($"STEPS RECORDING {steps + _agentManager.agentSteps}");
+            }
+
            _arm.armTarget.localPosition = _xrController.transform.localPosition - _originPos + _armPosOffset;
            _arm.armTarget.localEulerAngles = _xrController.transform.localEulerAngles - _originRot + _armRotOffset;
+
+            if (Mathf.Abs(_arm.armTarget.localPosition.x - _prevPos.x) > 0.25) {
+                Debug.Log("[A]");
+                _prevPos.x = _arm.armTarget.localPosition.x;
+                steps+=1;
+            }
+
+            if (Mathf.Abs(_arm.armTarget.localPosition.y - _prevPos.y) > 0.25) {
+                Debug.Log("[B]");
+                _prevPos.y = _arm.armTarget.localPosition.y;
+                steps+=1;
+            }
+
+            if (Mathf.Abs(_arm.armTarget.localPosition.z - _prevPos.z) > 0.25) {
+                Debug.Log("[C]");
+                _prevPos.z = _arm.armTarget.localPosition.z;
+                steps+=1;
+            }
+
+            if (Mathf.Abs(_arm.armTarget.localEulerAngles.x - _prevRot.x) > 30) {
+                Debug.Log("[D]");
+                _prevRot.x = _arm.armTarget.localEulerAngles.x;
+                steps+=1;
+            }
+
+            if (Mathf.Abs(_arm.armTarget.localEulerAngles.y - _prevRot.y) > 30) {
+                Debug.Log("[E]");
+                _prevRot.y = _arm.armTarget.localEulerAngles.y;
+                steps+=1;
+            }
+
+            if (Mathf.Abs(_arm.armTarget.localEulerAngles.z - _prevRot.z) > 30) {
+                Debug.Log("[F]");
+                _prevRot.z = _arm.armTarget.localEulerAngles.z;
+                steps+=1;
+            }
  
            float maxY = capsuleWorldCenter.y + cc.height / 2f;
            float minY = capsuleWorldCenter.y + (-cc.height / 2f) / 2f;
@@ -237,6 +289,17 @@ public class ArmManager : MonoBehaviour
        if (rightHandValue > 0){
             Debug.Log("[RECORDING ACTION] RightHandGrip"+rightHandValue.ToString());
        }
+
+       if (rightHandValue == 0) {
+            _prevGrasp = 0;
+       }
+
+       if(Mathf.Abs(_prevGrasp - rightHandValue) > 0.05) {
+            _prevGrasp = rightHandValue;
+            Debug.Log("[G]");
+            steps+=1;
+       } 
+
        return rightHandValue;
    }
  
@@ -276,6 +339,8 @@ public class ArmManager : MonoBehaviour
     public bool OpenOrCloseObject(List<SimObjPhysics> objects, ref string errorMessage) {
         bool hasOpenedOrClosed = false;
         Debug.Log("Check 3 Okayy");
+        Debug.Log("[H]");
+        steps+=1;
         foreach(SimObjPhysics sop in objects) {
             if (sop.IsOpenable) {
                 Debug.Log(sop.ObjectID);

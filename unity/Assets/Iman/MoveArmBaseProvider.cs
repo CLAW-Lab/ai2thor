@@ -67,8 +67,6 @@ public class MoveArmBaseProvider : MonoBehaviour
     float m_TimeStarted;
 
     private AgentManager AManager = null;
-    
-
     private void Start() {
         AManager = GameObject.Find("PhysicsSceneManager").GetComponentInChildren<AgentManager>();
     }
@@ -118,9 +116,11 @@ public class MoveArmBaseProvider : MonoBehaviour
         var cardinal = CardinalUtility.GetNearestCardinal(input);
         switch (cardinal) {
             case Cardinal.North:
+                //_armManager.steps += 1;
                 _armManager.ArmHeight += moveArmAmount;
                 break;
             case Cardinal.South:
+                //_armManager.steps += 1;
                 _armManager.ArmHeight -= moveArmAmount;
                 break;
             default:

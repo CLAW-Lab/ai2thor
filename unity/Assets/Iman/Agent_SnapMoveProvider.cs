@@ -136,6 +136,8 @@ public class Agent_SnapMoveProvider : MonoBehaviour
         }
 
         if (action["action"] != null) {
+            Debug.Log("[J]");
+            AManager.agentSteps+=1;
             agent.ProcessControlCommand(action);
         }
     }
