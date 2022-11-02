@@ -12,7 +12,7 @@ using UnityStandardAssets.Characters.FirstPerson;
 public class ArmManager : MonoBehaviour
 {
    [SerializeField] private XRBaseController _xrController;
-   [SerializeField] private int _maxResetCount = 100;
+   [SerializeField] private int _maxResetCount = 10000;
    [SerializeField] private float _hapticAmplitude = 0.7f;
    [SerializeField] private float _hapticDuration = 0.5f;
  
